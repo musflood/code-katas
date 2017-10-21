@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Social Golfer Problem Validator (4th kyu)**
+
+- **Module**: `social_golfers.py`
+- **Tests**: `test_social_golfers.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/social-golfer-problem-validator)
+
 **Sum of the first nth term of Series (7th kyu)**
 
 - **Module**: `sum_terms.py`
