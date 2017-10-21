@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Directions Reduction (5th kyu)**
+
+- **Module**: `dir_reduct.py`
+- **Tests**: `test_dir_reduct.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/directions-reduction)
+
 **Simple Encryption #1 - Alternating Split (6th kyu)**
 
 - **Module**: `alt_split.py`
