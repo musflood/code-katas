@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Persistent Bugger. (6th kyu)**
+
+- **Module**: `persistent_bugger.py`
+- **Tests**: `test_persistent_bugger.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/persistent-bugger)
+
 **Social Golfer Problem Validator (4th kyu)**
 
 - **Module**: `social_golfers.py`
