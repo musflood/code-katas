@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Simple Encryption #1 - Alternating Split (6th kyu)**
+
+- **Module**: `alt_split.py`
+- **Tests**: `test_alt_split.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/simple-encryption-number-1-alternating-split)
+
 **Esolang: Ticker (5th kyu)**
 
 - **Module**: `esolang_ticker.py`
