@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Esolang: Ticker (5th kyu)**
+
+- **Module**: `esolang_ticker.py`
+- **Tests**: `test_esolang_ticker.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/esolang-ticker)
+
 **Persistent Bugger. (6th kyu)**
 
 - **Module**: `persistent_bugger.py`
