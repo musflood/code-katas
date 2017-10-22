@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Highest Scoring Word (6th kyu)**
+
+- **Module**: `highest_word.py`
+- **Tests**: `test_highest_word.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/highest-scoring-word)
+
 **Directions Reduction (5th kyu)**
 
 - **Module**: `dir_reduct.py`
