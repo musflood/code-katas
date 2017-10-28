@@ -14,7 +14,7 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 - **URL**: None
 - **Challenge Details**:
 
-    Your assignment is to build a quick Python function incorporating a linked list, stack, doubly-linked list, or queue that takes a unicode string (text) as input and returns one of three possible values:
+    Your challenge is to build a quick Python function incorporating a linked list, stack, doubly-linked list, or queue that takes a unicode string (text) as input and returns one of three possible values:
 
     - Return 1 if the string is “open” (there are open parens that are not closed)
     - Return 0 if the string is “balanced” (there are an equal number of open and closed parentheses in the string)
