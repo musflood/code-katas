@@ -25,21 +25,34 @@ class SpaceInterpreter(object):
         self.stack = []
         self.heap = {}
 
+    def __str__(self):
+        """Print the current state of the code."""
+        vis_code = self.code.replace(' ', 's')
+        vis_code = vis_code.replace('\t', 't')
+        vis_code = vis_code.replace('\n', 'n')
+        return '{}[{}]{}'.format(vis_code[:self.p],
+                                 vis_code[self.p:self.p + 1],
+                                 vis_code[self.p + 1:])
+
     def run(self):
         """Run the interpreter and get the output."""
         output = ''
 
         while self.p < len(self.code):
+            print(self)
             if self.code[self.p] == ' ':
                 self.p += 1
-                self.manipulate_stack()
-            break
+                self.exec_manipulate_stack()
+            elif self.code[self.p] == '\n':
+                self.p += 1
+                if self.exec_flow_control():
+                    break
         else:
             raise ValueError('Code must terminate with an exit command.')
 
         return output
 
-    def manipulate_stack(self):
+    def exec_manipulate_stack(self):
         """Execute commands for the Stack Manipulation IMP."""
         command = self.code[self.p:self.p + 2]
 
@@ -51,7 +64,26 @@ class SpaceInterpreter(object):
         elif command == '\t ':
             self.p += 2
             i = self.parse_num()
-            self.stack.append(self.stack[-i])
+            try:
+                self.stack.append(self.stack[-i])
+            except IndexError:
+                raise IndexError('Duplication value is outside of stack.')
+
+        else:
+            raise ValueError('Invalid stack manipulation command.')
+
+    def exec_flow_control(self):
+        """Execute commands for the Flow Control IMP.
+
+        Return: True - exit the program, False - continue
+        """
+        command = self.code[self.p:self.p + 2]
+
+        if command == '\n\n':
+            return True
+
+        else:
+            raise ValueError('Invalid flow control command.')
 
     def parse_num(self):
         """Parse and evaluate the next number."""

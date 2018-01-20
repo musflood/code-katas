@@ -2,6 +2,22 @@
 import pytest
 
 
+def num_to_space(num):
+    """Transform a number into WhiteSpace."""
+    is_neg = False
+    if num < 0:
+        is_neg = True
+        num *= -1
+
+    bin_num = bin(num)[2:]
+    num_code = bin_num.replace('0', ' ').replace('1', '\t')
+    return '{}{}\n'.format('\t' if is_neg else ' ', num_code)
+
+
+FILL_STACK = '   \n   \t\n   \t \n   \t\t\n   \t  \n'
+TERMINATE = '\n\n\n'
+
+
 # def test_unclean_termination_raises_exception():
 #     """Test that unclean termination of the code raises a ValueError."""
 #     from esolang_whitespace import whitespace
@@ -139,3 +155,52 @@ def test_parse_num_moves_pointer_to_end_of_number_code(code, pointer):
     i = SpaceInterpreter(code)
     i.parse_num()
     assert i.p == pointer
+
+
+def test_exec_manipulate_stack_raises_error_for_invalid_command():
+    """Test exec_manipulate_stack raises a ValueError for an invalid command."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t')
+    with pytest.raises(ValueError):
+        i.exec_manipulate_stack()
+
+
+def test_exec_manipulate_stack_can_push_number_onto_the_stack():
+    """Test that exec_manipulate_stack can push a new value onto the stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  \n')
+    i.exec_manipulate_stack()
+    assert i.stack == [0]
+
+
+def test_exec_manipulate_stack_raises_error_duplicate_value_outside_stack():
+    """Test exec_manipulate_stack raises an IndexError for index out of stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t  \t\n')
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+@pytest.mark.parametrize('num', [x for x in range(1, 6)])
+def test_exec_manipulate_stack_can_duplicate_nth_value_from_top_of_stack(num):
+    """Test that exec_manipulate_stack can duplicate nth value."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t ' + num_to_space(num))
+    i.stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack()
+    assert i.stack == [0, 1, 2, 3, 4, 5 - num]
+
+
+def test_exec_flow_control_raises_error_for_invalid_command():
+    """Test exec_flow_control raises a ValueError for an invalid command."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' ')
+    with pytest.raises(ValueError):
+        i.exec_flow_control()
+
+
+def test_execute_flow_control_exit_command_ends_program():
+    """Test that execute_flow_control can end the program."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\n')
+    assert i.exec_flow_control() is True
