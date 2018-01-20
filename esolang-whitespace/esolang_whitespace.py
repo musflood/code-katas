@@ -29,13 +29,13 @@ class SpaceInterpreter(object):
         """Run the interpreter and get the output."""
         output = ''
 
-        running = True
-        while running:
+        while self.p < len(self.code):
             if self.code[self.p] == ' ':
                 self.p += 1
                 self.manipulate_stack()
-                print(self.stack)
-            running = False
+            break
+        else:
+            raise ValueError('Code must terminate with an exit command.')
 
         return output
 
@@ -55,15 +55,20 @@ class SpaceInterpreter(object):
 
     def parse_num(self):
         """Parse and evaluate the next number."""
-        if self.code[self.p] == '\n':
+        if not self.code or self.code[self.p] == '\n':
             raise ValueError('Numbers cannot be only a terminal.')
 
         sign = 1 if self.code[self.p] == ' ' else -1
         self.p += 1
         num = '0'
-        while self.p < len(self.code) and self.code[self.p] != '\n':
+        while self.p < len(self.code):
+            if self.code[self.p] == '\n':
+                break
             num += '0' if self.code[self.p] == ' ' else '1'
             self.p += 1
+        else:
+            raise ValueError('Number must end with a terminal.')
+
         num = sign * int(num, 2)
         self.p += 1
         return num
