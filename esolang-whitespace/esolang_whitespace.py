@@ -35,7 +35,17 @@ class SpaceInterpreter(object):
                                  vis_code[self.p + 1:])
 
     def run(self):
-        """Run the interpreter and get the output."""
+        """Run the interpreter and get the output.
+
+        Command modules:
+            s - Stack Manipulation
+            ts - Arithmetic
+            tt - Heap Access
+            tn - Input/Output
+            n - Flow Control
+
+        Raises ValueError for unclean termination.
+        """
         output = ''
 
         while self.p < len(self.code):
@@ -50,7 +60,7 @@ class SpaceInterpreter(object):
 
                 if self.code[self.p] == ' ':
                     self.p += 1
-                    self.exec_aritmetic()
+                    self.exec_arithmetic()
 
             elif self.code[self.p] == '\n':
                 self.p += 1
@@ -62,7 +72,17 @@ class SpaceInterpreter(object):
         return output
 
     def exec_manipulate_stack(self):
-        """Execute commands for the Stack Manipulation IMP."""
+        """Execute commands for the Stack Manipulation IMP.
+
+        Commands:
+            s (num) - Push num onto stack
+            ts (num) - Duplicate num-th value from top of stack
+            tn (num) - Discard top num values below top of stack
+                       num < 0 and num >= len(stack) discards all but top
+            ns - Duplicate top value on stack
+            nt - Swap top two values on stack
+            nn - Discard top value on stack
+        """
         command = self.code[self.p:self.p + 2]
 
         if command[0] == ' ':
@@ -111,8 +131,17 @@ class SpaceInterpreter(object):
             raise ValueError('Invalid stack manipulation command.')
 
     def exec_arithmetic(self):
-        """Execute commands for the Arithmetic IMP."""
+        """Execute commands for the Arithmetic IMP.
+
+        Commands:
+            ss - Pop a and b, then push b+a
+            st - Pop a and b, then push b-a
+            sn - Pop a and b, then push b*a
+            ts - Pop a and b, then push b//a - Raises ZeroDivisionError
+            tt - Pop a and b, then push b%a - Raises ZeroDivisionError
+        """
         command = self.code[self.p:self.p + 2]
+        self.p += 2
 
         if command == '  ':
             try:
@@ -124,10 +153,43 @@ class SpaceInterpreter(object):
         else:
             raise ValueError('Invalid arithmetic command.')
 
+    def exec_heap_access(self):
+        """Execute commands for the Heap Access IMP.
+
+        Commands:
+            s - Pop a and b, then store a at heap address b
+            t - Pop a, then push the value at heap address a onto stack
+        """
+        command = self.code[self.p:self.p + 1]
+        self.p += 1
+
+    def exec_input_output(self):
+        """Execute commands for the Input/Output IMP.
+
+        Commands:
+            ss - Pop value from stack and output as a character
+            st - Pop value from stack and output as a number
+            ts - Read character from input, a, pop value from stack, b,
+                 then store ASCII value of a at heap address b
+            tt - Read number from input, a, pop value from stack, b,
+                 then a at heap address b
+
+        Return: Output string
+        """
+        command = self.code[self.p:self.p + 2]
         self.p += 2
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.
+
+        Commands:
+            ss (label) - Mark current position with label
+            st (label) - Call subroutine at label
+            sn (label) - Jump unconditionally to position at label
+            ts (label) - Pop value off stack, jump to label if value == 0
+            tt (label) - Pop value off stack, jump to label if value < 0
+            tn - Exit subroutine and return to where subroutine was called
+            nn - Exit the program
 
         Return: True - exit the program, False - continue
         """
@@ -140,8 +202,20 @@ class SpaceInterpreter(object):
             raise ValueError('Invalid flow control command.')
 
     def parse_num(self):
-        """Parse and evaluate the next number."""
-        if not self.code or self.code[self.p] == '\n':
+        """Parse and evaluate the next number in the code.
+
+        Numbers consist of [sign][binary][terminal].
+
+        sign: t = negative, s = positive
+        binary: s = 0, t = 1
+        terminal: n
+
+        Raises ValueError for unclean termination.
+        """
+        if not self.code[self.p:]:
+            raise ValueError('Numbers cannot be empty.')
+
+        if self.code[self.p] == '\n':
             raise ValueError('Numbers cannot be only a terminal.')
 
         sign = 1 if self.code[self.p] == ' ' else -1
@@ -158,3 +232,11 @@ class SpaceInterpreter(object):
         num = sign * int(num, 2)
         self.p += 1
         return num
+
+    def parse_label(self):
+        """Parse and validate the next label in the code.
+
+        Labels consist of any number of t and s ending with a [terminal], n.
+        Labels must be unique.
+        """
+        pass

@@ -95,6 +95,45 @@ def test_constructing_interpreter_assigns_given_input():
     assert i.input == 'Hello world'
 
 
+def test_run_raises_error_for_unclean_exit_of_program():
+    """Test that run raises a ValueError for ending a program without a terminal."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('')
+    with pytest.raises(ValueError):
+        i.run()
+
+
+def test_run_can_exit_cleanly_without_error():
+    """Test that run can exit the program cleanly with no errors."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\n\n')
+    i.run()
+
+
+def test_run_can_access_the_stack_manipulation_imp():
+    """Test that run can execute commands from the stack manipuation IMP."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + TERMINATE)
+    i.run()
+    assert i.stack == [0, 1, 2, 3, 4]
+
+
+def test_run_can_access_the_arithmetic_imp():
+    """Test that run can execute commands from the arithmetic IMP."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\t   ' + TERMINATE)
+    i.run()
+    assert i.stack == [0, 1, 2, 7]
+
+
+def test_parse_num_empty_number_raises_error():
+    """Test that parsing empty number raises a ValueError."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('')
+    with pytest.raises(ValueError):
+        i.parse_num()
+
+
 def test_parse_num_only_terminal_raises_error():
     """Test that parsing terminal only number raises a ValueError."""
     from esolang_whitespace import SpaceInterpreter
@@ -283,6 +322,14 @@ def test_exec_manipulate_stack_can_discard_the_top_value_on_the_stack(stack):
     i.stack = stack[:]
     i.exec_manipulate_stack()
     assert i.stack == stack[:-1]
+
+
+def test_exec_arithmetic_raises_error_for_invalid_command():
+    """Test exec_arithmetic raises a ValueError for an invalid command."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' ')
+    with pytest.raises(ValueError):
+        i.exec_arithmetic()
 
 
 def test_exec_arithmetic_raises_error_sum_values_from_empty_stack():
