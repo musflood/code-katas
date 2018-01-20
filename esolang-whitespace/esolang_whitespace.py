@@ -40,9 +40,11 @@ class SpaceInterpreter(object):
 
         while self.p < len(self.code):
             print(self)
+
             if self.code[self.p] == ' ':
                 self.p += 1
                 self.exec_manipulate_stack()
+
             elif self.code[self.p] == '\n':
                 self.p += 1
                 if self.exec_flow_control():
@@ -63,11 +65,19 @@ class SpaceInterpreter(object):
 
         elif command == '\t ':
             self.p += 2
-            i = self.parse_num()
+            n = self.parse_num()
             try:
-                self.stack.append(self.stack[-i])
+                self.stack.append(self.stack[-(n + 1)])
             except IndexError:
                 raise IndexError('Duplication value is outside of stack.')
+
+        elif command == '\t\n':
+            self.p += 2
+            n = self.parse_num()
+            if n < 0:
+                self.stack = self.stack[-1:]
+            else:
+                self.stack = self.stack[:-(n + 1)] + self.stack[-1:]
 
         else:
             raise ValueError('Invalid stack manipulation command.')

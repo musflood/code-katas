@@ -181,14 +181,44 @@ def test_exec_manipulate_stack_raises_error_duplicate_value_outside_stack():
         i.exec_manipulate_stack()
 
 
-@pytest.mark.parametrize('num', [x for x in range(1, 6)])
+@pytest.mark.parametrize('num', [x for x in range(0, 5)])
 def test_exec_manipulate_stack_can_duplicate_nth_value_from_top_of_stack(num):
     """Test that exec_manipulate_stack can duplicate nth value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ' + num_to_space(num))
     i.stack = [0, 1, 2, 3, 4]
     i.exec_manipulate_stack()
-    assert i.stack == [0, 1, 2, 3, 4, 5 - num]
+    assert i.stack == [0, 1, 2, 3, 4, 4 - num]
+
+
+@pytest.mark.parametrize('num', [x for x in range(-5, 0)])
+def test_exec_manipulate_stack_discards_all_but_top_for_neg_num(num):
+    """Test that all but top value is discarded for a negative n value."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n' + num_to_space(num))
+    i.stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack()
+    assert i.stack == [4]
+
+
+@pytest.mark.parametrize('num', [x for x in range(5, 10)])
+def test_exec_manipulate_stack_discards_all_but_top_for_large_num(num):
+    """Test all but top value is discarded for n value larger than stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n' + num_to_space(num))
+    i.stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack()
+    assert i.stack == [4]
+
+
+@pytest.mark.parametrize('num', [x for x in range(0, 5)])
+def test_exec_manipulate_stack_discards_top_n_values_below_top(num):
+    """Test that the top n values below the top are discarded."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n' + num_to_space(num))
+    i.stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack()
+    assert i.stack == [0, 1, 2, 3, 4][:-(num + 1)] + [4]
 
 
 def test_exec_flow_control_raises_error_for_invalid_command():
