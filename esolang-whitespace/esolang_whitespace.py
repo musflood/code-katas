@@ -45,6 +45,13 @@ class SpaceInterpreter(object):
                 self.p += 1
                 self.exec_manipulate_stack()
 
+            elif self.code[self.p] == '\t':
+                self.p += 1
+
+                if self.code[self.p] == ' ':
+                    self.p += 1
+                    self.exec_aritmetic()
+
             elif self.code[self.p] == '\n':
                 self.p += 1
                 if self.exec_flow_control():
@@ -80,18 +87,21 @@ class SpaceInterpreter(object):
                 self.stack = self.stack[:-(n + 1)] + self.stack[-1:]
 
         elif command == '\n ':
+            self.p += 2
             try:
                 self.stack.append(self.stack[-1])
             except IndexError:
                 raise IndexError('Cannot duplicate from empty stack.')
 
         elif command == '\n\t':
+            self.p += 2
             try:
                 self.stack[-1], self.stack[-2] = self.stack[-2], self.stack[-1]
             except IndexError:
                 raise IndexError('Not enough values in stack to swap.')
 
         elif command == '\n\n':
+            self.p += 2
             try:
                 self.stack.pop()
             except IndexError:
@@ -99,6 +109,22 @@ class SpaceInterpreter(object):
 
         else:
             raise ValueError('Invalid stack manipulation command.')
+
+    def exec_arithmetic(self):
+        """Execute commands for the Arithmetic IMP."""
+        command = self.code[self.p:self.p + 2]
+
+        if command == '  ':
+            try:
+                a, b = self.stack.pop(), self.stack.pop()
+                self.stack.append(a + b)
+            except IndexError:
+                raise IndexError('Not enough values in stack for operation.')
+
+        else:
+            raise ValueError('Invalid arithmetic command.')
+
+        self.p += 2
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.

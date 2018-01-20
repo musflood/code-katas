@@ -285,6 +285,35 @@ def test_exec_manipulate_stack_can_discard_the_top_value_on_the_stack(stack):
     assert i.stack == stack[:-1]
 
 
+def test_exec_arithmetic_raises_error_sum_values_from_empty_stack():
+    """Test exec_arithmetic raises an IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  ')
+    with pytest.raises(IndexError):
+        i.exec_arithmetic()
+
+
+def test_exec_arithmetic_raises_error_sum_values_from_one_value_stack():
+    """Test exec_arithmetic raises an IndexError for one value stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  ')
+    i.stack = [0]
+    with pytest.raises(IndexError):
+        i.exec_arithmetic()
+
+
+@pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
+def test_exec_arithmetic_puhes_sum_of_top_values_on_the_stack(stack):
+    """Test that arithmetic pushes the sum of top two values in stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  ')
+    i.stack = stack[:]
+    i.exec_arithmetic()
+    sum_stack = stack[:-2]
+    sum_stack.append(stack[-2] + stack[-1])
+    assert i.stack == sum_stack
+
+
 def test_exec_flow_control_raises_error_for_invalid_command():
     """Test exec_flow_control raises a ValueError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
