@@ -221,6 +221,70 @@ def test_exec_manipulate_stack_discards_top_n_values_below_top(num):
     assert i.stack == [0, 1, 2, 3, 4][:-(num + 1)] + [4]
 
 
+def test_exec_manipulate_stack_raises_error_duplicate_value_in_empty_stack():
+    """Test exec_manipulate_stack raises an IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n ')
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+@pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(1, 5)])
+def test_exec_manipulate_stack_can_duplicate_the_top_value_on_the_stack(stack):
+    """Test that manipulate stack can duplicate the top stack value."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n ')
+    i.stack = stack[:]
+    i.exec_manipulate_stack()
+    assert i.stack == stack + stack[-1:]
+
+
+def test_exec_manipulate_stack_raises_error_swap_values_in_empty_stack():
+    """Test exec_manipulate_stack raises an IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\t')
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+def test_exec_manipulate_stack_raises_error_swap_values_in_one_value_stack():
+    """Test exec_manipulate_stack raises an IndexError for one value stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\t')
+    i.stack = [0]
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+@pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(2, 6)])
+def test_exec_manipulate_stack_can_swap_the_top_values_on_the_stack(stack):
+    """Test that manipulate stack can swap the top stack values."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\t')
+    i.stack = stack[:]
+    i.exec_manipulate_stack()
+    stack[-1], stack[-2] = stack[-2], stack[-1]
+    assert i.stack == stack
+
+
+def test_exec_manipulate_stack_raises_error_discard_top_value_in_empty_stack():
+    """Test exec_manipulate_stack raises an IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\n')
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+@pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(1, 5)])
+def test_exec_manipulate_stack_can_discard_the_top_value_on_the_stack(stack):
+    """Test that manipulate stack can discard the top stack value."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n\n')
+    i.stack = stack[:]
+    i.exec_manipulate_stack()
+    assert i.stack == stack[:-1]
+
+
 def test_exec_flow_control_raises_error_for_invalid_command():
     """Test exec_flow_control raises a ValueError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter

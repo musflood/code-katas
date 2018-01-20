@@ -79,6 +79,24 @@ class SpaceInterpreter(object):
             else:
                 self.stack = self.stack[:-(n + 1)] + self.stack[-1:]
 
+        elif command == '\n ':
+            try:
+                self.stack.append(self.stack[-1])
+            except IndexError:
+                raise IndexError('Cannot duplicate from empty stack.')
+
+        elif command == '\n\t':
+            try:
+                self.stack[-1], self.stack[-2] = self.stack[-2], self.stack[-1]
+            except IndexError:
+                raise IndexError('Not enough values in stack to swap.')
+
+        elif command == '\n\n':
+            try:
+                self.stack.pop()
+            except IndexError:
+                raise IndexError('Cannot discard from empty stack.')
+
         else:
             raise ValueError('Invalid stack manipulation command.')
 
