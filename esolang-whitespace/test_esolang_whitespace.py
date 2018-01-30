@@ -82,10 +82,28 @@ def test_constructing_interpreter_sets_all_properties_to_empty():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('   \t\t')
     assert i.input == ''
+    assert i._call_stack == [0]
     assert i.p == 0
     assert i.labels == {}
     assert i.stack == []
     assert i.heap == {}
+
+
+def test_p_property_accesses_top_of_call_stack():
+    """Test that the p property accesses the top of the call stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('')
+    i._call_stack = [0, 1, 2, 3]
+    assert i.p == 3
+
+
+def test_p_property_sets_the_top_of_call_stack():
+    """Test that the p property sets the top of the call stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('')
+    i._call_stack = [0, 1, 2, 3]
+    i.p = 9
+    assert i._call_stack[-1] == 9
 
 
 def test_constructing_interpreter_assigns_given_input():
@@ -709,6 +727,24 @@ def test_exec_flow_control_raises_error_for_invalid_command():
     i = SpaceInterpreter(' ')
     with pytest.raises(SyntaxError):
         i.exec_flow_control()
+
+
+def test_exec_flow_control_marking_with_duplicate_label_raises_error():
+    """Test exec_flow_control raises a NameError for a duplicate label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  \t\n')
+    i.labels = {'\t': 0}
+    with pytest.raises(NameError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_can_mark_current_location_with_label():
+    """Test exec_flow_control marks current position with a label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('  \t\n\t\n  ')
+    assert i.labels == {}
+    i.exec_flow_control()
+    assert i.labels == {'\t': 4}
 
 
 def test_execute_flow_control_exit_command_ends_program():

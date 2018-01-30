@@ -20,10 +20,22 @@ class SpaceInterpreter(object):
         """Create an interpreter for a given code and input."""
         self.code = ''.join([ch for ch in code if ch == ' ' or ch == '\n' or ch == '\t'])
         self.input = inp
-        self.p = 0
+
         self.labels = {}
         self.stack = []
         self.heap = {}
+
+        self._call_stack = [0]
+
+    @property
+    def p(self):
+        """Get the current position of the pointer."""
+        return self._call_stack[-1]
+
+    @p.setter
+    def p(self, value):
+        """Set the current position of the pointer."""
+        self._call_stack[-1] = value
 
     def __str__(self):
         """Print the current state of the code."""
@@ -284,7 +296,24 @@ class SpaceInterpreter(object):
 
         if command == '  ':
             label = self.parse_label()
+            if label in self.labels:
+                raise NameError('Cannot redeclare a label.')
             self.labels[label] = self.p
+
+        elif command == ' \t':
+            pass
+
+        elif command == ' \n':
+            pass
+
+        elif command == '\t ':
+            pass
+
+        elif command == '\t\t':
+            pass
+
+        elif command == '\t\n':
+            pass
 
         elif command == '\n\n':
             return True
