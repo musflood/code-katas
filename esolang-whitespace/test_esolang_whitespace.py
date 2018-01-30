@@ -126,6 +126,33 @@ def test_run_can_access_the_arithmetic_imp():
     assert i.stack == [0, 1, 2, 7]
 
 
+def test_run_can_access_the_heap_access_imp():
+    """Test that run can execute commands from the heap access IMP."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\t\t ' + TERMINATE)
+    i.run()
+    assert i.stack == [0, 1, 2]
+    assert i.heap == {3: 4}
+
+
+def test_run_can_access_the_input_output_imp():
+    """Test that run can execute commands from the input/output IMP."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\t\n \t' + TERMINATE)
+    output = i.run()
+    assert i.stack == [0, 1, 2, 3]
+    assert output == '4'
+
+
+def test_run_can_access_the_flow_control_imp():
+    """Test that run can execute commands from the flow control IMP."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\n  \n' + TERMINATE)
+    i.run()
+    assert i.stack == [0, 1, 2, 3, 4]
+    assert i.labels == {'': 32}
+
+
 def test_parse_num_empty_number_raises_error():
     """Test that parsing empty number raises a SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
@@ -194,6 +221,47 @@ def test_parse_num_moves_pointer_to_end_of_number_code(code, pointer):
     i = SpaceInterpreter(code)
     i.parse_num()
     assert i.p == pointer
+
+
+def test_parse_label_raises_error_for_empty_label():
+    """Test that parse_label raises a SyntaxError for an empty label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('')
+    with pytest.raises(SyntaxError):
+        i.parse_label()
+
+
+def test_parse_label_raises_error_for_non_terminated_label():
+    """Test that parse_label raises a SyntaxError for non terminated label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \t \t')
+    with pytest.raises(SyntaxError):
+        i.parse_label()
+
+
+def test_parse_label_returns_label_without_terminal():
+    """Test that parse_label returns the label without the terminal char."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \t \t \n')
+    label = i.parse_label()
+    assert label == ' \t \t '
+
+
+def test_parse_label_can_parse_terminal_as_label():
+    """Test that parse_label accepts just a terminal as a valid label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n')
+    label = i.parse_label()
+    assert label == ''
+
+
+def test_parse_label_moves_pointer_to_after_label():
+    """Test that parse_label moves the pointer to after the label terminal."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\n  \t')
+    assert i.p == 0
+    i.parse_label()
+    assert i.p == 3
 
 
 def test_exec_manipulate_stack_raises_error_for_invalid_command():

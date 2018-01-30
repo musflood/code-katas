@@ -269,7 +269,7 @@ class SpaceInterpreter(object):
         """Execute commands for the Flow Control IMP.
 
         Commands:
-            ss (label) - Mark current position with label
+            ss (label) - Mark current position with label, must be unique
             st (label) - Call subroutine at label
             sn (label) - Jump unconditionally to position at label
             ts (label) - Pop value off stack, jump to label if value == 0
@@ -280,8 +280,13 @@ class SpaceInterpreter(object):
         Return: True - exit the program, False - continue
         """
         command = self.code[self.p:self.p + 2]
+        self.p += 2
 
-        if command == '\n\n':
+        if command == '  ':
+            label = self.parse_label()
+            self.labels[label] = self.p
+
+        elif command == '\n\n':
             return True
 
         else:
@@ -323,6 +328,15 @@ class SpaceInterpreter(object):
         """Parse and validate the next label in the code.
 
         Labels consist of any number of t and s ending with a [terminal], n.
-        Labels must be unique.
         """
-        pass
+        if not self.code[self.p:]:
+            raise SyntaxError('Labels cannot be empty.')
+
+        label, terminal, _ = self.code[self.p:].partition('\n')
+
+        if not terminal:
+            raise SyntaxError('Lables must end with a terminal')
+
+        self.p += len(label) + 1
+
+        return label
