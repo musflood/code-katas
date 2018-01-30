@@ -18,53 +18,53 @@ FILL_STACK = '   \n   \t\n   \t \n   \t\t\n   \t  \n'
 TERMINATE = '\n\n\n'
 
 
-# def test_unclean_termination_raises_exception():
-#     """Test that unclean termination of the code raises a ValueError."""
-#     from esolang_whitespace import whitespace
-#     with pytest.raises(ValueError):
-#         whitespace('')
+def test_unclean_termination_raises_exception():
+    """Test that unclean termination of the code raises a SyntaxError."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(SyntaxError):
+        whitespace('')
 
-# CODES = [
-#     ("   \t\n\t\n \t\n\n\n", "1"),
-#     ("   \t \n\t\n \t\n\n\n", "2"),
-#     ("   \t\t\n\t\n \t\n\n\n", "3"),
-#     ("    \n\t\n \t\n\n\n", "0")
-# ]
-
-
-# @pytest.mark.parametrize('code, output', CODES)
-# def test_pushing_positive_numbers_with_whitespace(code, output):
-#     """Test that pushing and outputing positive numbers works."""
-#     from esolang_whitespace import whitespace
-#     assert whitespace(code) == output
+CODES = [
+    ("   \t\n\t\n \t\n\n\n", "1"),
+    ("   \t \n\t\n \t\n\n\n", "2"),
+    ("   \t\t\n\t\n \t\n\n\n", "3"),
+    ("    \n\t\n \t\n\n\n", "0")
+]
 
 
-# CODES = [
-#     ("  \t\t\n\t\n \t\n\n\n", "-1"),
-#     ("  \t\t \n\t\n \t\n\n\n", "-2"),
-#     ("  \t\t\t\n\t\n \t\n\n\n", "-3")
-# ]
+@pytest.mark.parametrize('code, output', CODES)
+def test_pushing_positive_numbers_with_whitespace(code, output):
+    """Test that pushing and outputing positive numbers works."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
 
 
-# @pytest.mark.parametrize('code, output', CODES)
-# def test_pushing_negative_numbers_with_whitespace(code, output):
-#     """Test that pushing and outputing negative numbers works."""
-#     from esolang_whitespace import whitespace
-#     assert whitespace(code) == output
+CODES = [
+    ("  \t\t\n\t\n \t\n\n\n", "-1"),
+    ("  \t\t \n\t\n \t\n\n\n", "-2"),
+    ("  \t\t\t\n\t\n \t\n\n\n", "-3")
+]
 
 
-# CODES = [
-#     ("   \t     \t\n\t\n  \n\n\n", "A"),
-#     ("   \t    \t \n\t\n  \n\n\n", "B"),
-#     ("   \t    \t\t\n\t\n  \n\n\n", "C")
-# ]
+@pytest.mark.parametrize('code, output', CODES)
+def test_pushing_negative_numbers_with_whitespace(code, output):
+    """Test that pushing and outputing negative numbers works."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
 
 
-# @pytest.mark.parametrize('code, output', CODES)
-# def test_output_of_letters_with_whitespace(code, output):
-#     """Test that outputing letters works."""
-#     from esolang_whitespace import whitespace
-#     assert whitespace(code) == output
+CODES = [
+    ("   \t     \t\n\t\n  \n\n\n", "A"),
+    ("   \t    \t \n\t\n  \n\n\n", "B"),
+    ("   \t    \t\t\n\t\n  \n\n\n", "C")
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_output_of_letters_with_whitespace(code, output):
+    """Test that outputing letters works."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
 
 
 # Tests for the Interpreter Class
@@ -541,7 +541,7 @@ def test_exec_input_output_can_output_top_of_stack_as_number(stack):
     i = SpaceInterpreter(' \t')
     i.stack = stack[:]
     output = i.exec_input_output()
-    assert output == stack[-1]
+    assert output == str(stack[-1])
 
 
 def test_exec_input_output_raises_error_when_reading_char_from_empty_input():

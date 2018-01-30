@@ -65,7 +65,7 @@ class SpaceInterpreter(object):
                 self.exec_heap_access()
 
             elif imp == '\t\n':
-                self.exec_input_output()
+                output += self.exec_input_output()
 
             elif imp[0] == '\n':
                 self.p -= 1
@@ -225,7 +225,7 @@ class SpaceInterpreter(object):
 
         elif command == ' \t':
             try:
-                return self.stack.pop()
+                return str(self.stack.pop())
             except IndexError:
                 raise IndexError('No values in stack to output.')
 
