@@ -72,7 +72,7 @@ class SpaceInterpreter(object):
                 if self.exec_flow_control():
                     break
         else:
-            raise ValueError('Code must terminate with an exit command.')
+            raise SyntaxError('Code must terminate with an exit command.')
 
         return output
 
@@ -129,7 +129,7 @@ class SpaceInterpreter(object):
                 raise IndexError('Cannot discard from empty stack.')
 
         else:
-            raise ValueError('Invalid stack manipulation command.')
+            raise SyntaxError('Invalid stack manipulation command.')
 
     def exec_arithmetic(self):
         """Execute commands for the Arithmetic IMP.
@@ -168,7 +168,7 @@ class SpaceInterpreter(object):
             self.stack.append(b % a)
 
         else:
-            raise ValueError('Invalid arithmetic command.')
+            raise SyntaxError('Invalid arithmetic command.')
 
     def exec_heap_access(self):
         """Execute commands for the Heap Access IMP.
@@ -199,7 +199,7 @@ class SpaceInterpreter(object):
                 raise NameError('Invalid heap address.')
 
         else:
-            raise ValueError('Invalid heap access command.')
+            raise SyntaxError('Invalid heap access command.')
 
     def exec_input_output(self):
         """Execute commands for the Input/Output IMP.
@@ -254,7 +254,7 @@ class SpaceInterpreter(object):
                 raise ValueError('Cannot parse input as a number.')
 
         else:
-            raise ValueError('Invalid input/output command.')
+            raise SyntaxError('Invalid input/output command.')
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.
@@ -276,7 +276,7 @@ class SpaceInterpreter(object):
             return True
 
         else:
-            raise ValueError('Invalid flow control command.')
+            raise SyntaxError('Invalid flow control command.')
 
     def parse_num(self):
         """Parse and evaluate the next number in the code.
@@ -290,10 +290,10 @@ class SpaceInterpreter(object):
         Raises ValueError for unclean termination.
         """
         if not self.code[self.p:]:
-            raise ValueError('Numbers cannot be empty.')
+            raise SyntaxError('Numbers cannot be empty.')
 
         if self.code[self.p] == '\n':
-            raise ValueError('Numbers cannot be only a terminal.')
+            raise SyntaxError('Numbers cannot be only a terminal.')
 
         sign = 1 if self.code[self.p] == ' ' else -1
         self.p += 1
@@ -304,7 +304,7 @@ class SpaceInterpreter(object):
             num += '0' if self.code[self.p] == ' ' else '1'
             self.p += 1
         else:
-            raise ValueError('Number must end with a terminal.')
+            raise SyntaxError('Number must end with a terminal.')
 
         num = sign * int(num, 2)
         self.p += 1

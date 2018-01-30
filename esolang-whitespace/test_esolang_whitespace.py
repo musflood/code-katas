@@ -96,10 +96,10 @@ def test_constructing_interpreter_assigns_given_input():
 
 
 def test_run_raises_error_for_unclean_exit_of_program():
-    """Test that run raises a ValueError for ending a program without a terminal."""
+    """Test that run raises a SyntaxError for ending a program without a terminal."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.run()
 
 
@@ -127,26 +127,26 @@ def test_run_can_access_the_arithmetic_imp():
 
 
 def test_parse_num_empty_number_raises_error():
-    """Test that parsing empty number raises a ValueError."""
+    """Test that parsing empty number raises a SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.parse_num()
 
 
 def test_parse_num_only_terminal_raises_error():
-    """Test that parsing terminal only number raises a ValueError."""
+    """Test that parsing terminal only number raises a SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.parse_num()
 
 
 def test_parse_num_raises_error_for_unterminated_number():
-    """Test that parsing number with no terminal raises ValueError."""
+    """Test that parsing number with no terminal raises SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t\t \t')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.parse_num()
 
 
@@ -197,10 +197,10 @@ def test_parse_num_moves_pointer_to_end_of_number_code(code, pointer):
 
 
 def test_exec_manipulate_stack_raises_error_for_invalid_command():
-    """Test exec_manipulate_stack raises a ValueError for an invalid command."""
+    """Test exec_manipulate_stack raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.exec_manipulate_stack()
 
 
@@ -325,11 +325,11 @@ def test_exec_manipulate_stack_can_discard_the_top_value_on_the_stack(stack):
 
 
 def test_exec_arithmetic_raises_error_for_invalid_command():
-    """Test exec_arithmetic raises a ValueError for an invalid command."""
+    """Test exec_arithmetic raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
     i.stack = [1, 2]
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.exec_arithmetic()
 
 
@@ -442,11 +442,11 @@ def test_exec_arithmetic_mod_matches_sign_of_top_stack_value(stack):
 
 
 def test_exec_heap_access_raises_error_for_invalid_command():
-    """Test exec_heap_access raises a ValueError for an invalid command."""
+    """Test exec_heap_access raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n')
     i.stack = [1, 2]
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.exec_heap_access()
 
 
@@ -501,10 +501,10 @@ def test_exec_heap_access_stores_values_into_stack_from_heap(heap):
 
 
 def test_exec_input_output_raises_error_for_invalid_command():
-    """Test exec_input_output raises a ValueError for an invalid command."""
+    """Test exec_input_output raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.exec_input_output()
 
 
@@ -608,10 +608,10 @@ def test_exec_input_output_stores_num_from_input_as_int_in_heap(inp):
 
 
 def test_exec_flow_control_raises_error_for_invalid_command():
-    """Test exec_flow_control raises a ValueError for an invalid command."""
+    """Test exec_flow_control raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         i.exec_flow_control()
 
 
