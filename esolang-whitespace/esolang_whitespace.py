@@ -51,19 +51,24 @@ class SpaceInterpreter(object):
         while self.p < len(self.code):
             print(self)
 
-            if self.code[self.p] == ' ':
-                self.p += 1
+            imp = self.code[self.p:self.p + 2]
+            self.p += 2
+
+            if imp[0] == ' ':
+                self.p -= 1
                 self.exec_manipulate_stack()
 
-            elif self.code[self.p] == '\t':
-                self.p += 1
+            elif imp == '\t ':
+                self.exec_arithmetic()
 
-                if self.code[self.p] == ' ':
-                    self.p += 1
-                    self.exec_arithmetic()
+            elif imp == '\t\t':
+                self.exec_heap_access()
 
-            elif self.code[self.p] == '\n':
-                self.p += 1
+            elif imp == '\t\n':
+                self.exec_input_output()
+
+            elif imp[0] == '\n':
+                self.p -= 1
                 if self.exec_flow_control():
                     break
         else:
@@ -84,14 +89,14 @@ class SpaceInterpreter(object):
             nn - Discard top value on stack
         """
         command = self.code[self.p:self.p + 2]
+        self.p += 2
 
         if command[0] == ' ':
-            self.p += 1
+            self.p -= 1
             num = self.parse_num()
             self.stack.append(num)
 
         elif command == '\t ':
-            self.p += 2
             n = self.parse_num()
             try:
                 self.stack.append(self.stack[-(n + 1)])
@@ -99,7 +104,6 @@ class SpaceInterpreter(object):
                 raise IndexError('Duplication value is outside of stack.')
 
         elif command == '\t\n':
-            self.p += 2
             n = self.parse_num()
             if n < 0:
                 self.stack = self.stack[-1:]
@@ -107,21 +111,18 @@ class SpaceInterpreter(object):
                 self.stack = self.stack[:-(n + 1)] + self.stack[-1:]
 
         elif command == '\n ':
-            self.p += 2
             try:
                 self.stack.append(self.stack[-1])
             except IndexError:
                 raise IndexError('Cannot duplicate from empty stack.')
 
         elif command == '\n\t':
-            self.p += 2
             try:
                 self.stack[-1], self.stack[-2] = self.stack[-2], self.stack[-1]
             except IndexError:
                 raise IndexError('Not enough values in stack to swap.')
 
         elif command == '\n\n':
-            self.p += 2
             try:
                 self.stack.pop()
             except IndexError:
@@ -142,13 +143,29 @@ class SpaceInterpreter(object):
         """
         command = self.code[self.p:self.p + 2]
         self.p += 2
+        try:
+            a, b = self.stack.pop(), self.stack.pop()
+        except IndexError:
+            raise IndexError('Not enough values in stack for operation.')
 
         if command == '  ':
-            try:
-                a, b = self.stack.pop(), self.stack.pop()
-                self.stack.append(a + b)
-            except IndexError:
-                raise IndexError('Not enough values in stack for operation.')
+            self.stack.append(a + b)
+
+        elif command == ' \t':
+            self.stack.append(b - a)
+
+        elif command == ' \n':
+            self.stack.append(a * b)
+
+        elif command == '\t ':
+            if a == 0:
+                raise ZeroDivisionError('Cannot divide by zero.')
+            self.stack.append(b / a)
+
+        elif command == '\t\t':
+            if a == 0:
+                raise ZeroDivisionError('Cannot divide by zero.')
+            self.stack.append(b % a)
 
         else:
             raise ValueError('Invalid arithmetic command.')
@@ -162,6 +179,27 @@ class SpaceInterpreter(object):
         """
         command = self.code[self.p:self.p + 1]
         self.p += 1
+
+        try:
+            a = self.stack.pop()
+        except IndexError:
+            raise IndexError('Not enough values in stack for operation.')
+
+        if command == ' ':
+            try:
+                b = self.stack.pop()
+            except IndexError:
+                raise IndexError('Not enough values in stack for operation.')
+            self.heap[b] = a
+
+        elif command == '\t':
+            try:
+                self.stack.append(self.heap[a])
+            except KeyError:
+                raise NameError('Invalid heap address.')
+
+        else:
+            raise ValueError('Invalid heap access command.')
 
     def exec_input_output(self):
         """Execute commands for the Input/Output IMP.
@@ -178,6 +216,27 @@ class SpaceInterpreter(object):
         """
         command = self.code[self.p:self.p + 2]
         self.p += 2
+
+        if command == '  ':
+            try:
+                return chr(self.stack.pop())
+            except IndexError:
+                raise IndexError('Not enough values in stack for operation.')
+
+        elif command == ' \t':
+            try:
+                return self.stack.pop()
+            except IndexError:
+                raise IndexError('Not enough values in stack for operation.')
+
+        elif command == '\t ':
+            pass
+
+        elif command == '\t\t':
+            pass
+
+        else:
+            raise ValueError('Invalid input/output command.')
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.
