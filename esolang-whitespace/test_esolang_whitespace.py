@@ -215,7 +215,17 @@ def test_exec_manipulate_stack_can_push_number_onto_the_stack():
 def test_exec_manipulate_stack_raises_error_duplicate_value_outside_stack():
     """Test exec_manipulate_stack raises an IndexError for index out of stack."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\t  \t\n')
+    i = SpaceInterpreter('\t  \t \n')
+    i.stack = [0]
+    with pytest.raises(IndexError):
+        i.exec_manipulate_stack()
+
+
+def test_exec_manipulate_stack_raises_error_duplicate_value_at_neg_index():
+    """Test exec_manipulate_stack raises an IndexError for negative index."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\t\n')
+    i.stack = [0]
     with pytest.raises(IndexError):
         i.exec_manipulate_stack()
 
@@ -403,7 +413,7 @@ def test_exec_arithmetic_pushes_quot_of_top_values_on_the_stack(stack):
     i.stack = stack[:]
     i.exec_arithmetic()
     quot_stack = stack[:-2]
-    quot_stack.append(stack[-2] / stack[-1])
+    quot_stack.append(stack[-2] // stack[-1])
     assert i.stack == quot_stack
 
 
@@ -582,7 +592,7 @@ def test_exec_input_output_raises_error_when_reading_num_from_empty_input():
 def test_exec_input_output_raises_error_when_reading_num_for_empty_stack():
     """Test that exec_inout_output raises IndexError for empty stack."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\t\t', '1241')
+    i = SpaceInterpreter('\t\t', '1241\n')
     with pytest.raises(IndexError):
         i.exec_input_output()
 
@@ -590,13 +600,31 @@ def test_exec_input_output_raises_error_when_reading_num_for_empty_stack():
 def test_exec_input_output_raises_error_when_reading_non_number_as_num():
     """Test that exec_inout_output raises ValueError for reading char as num."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\t\t', 'Hello')
+    i = SpaceInterpreter('\t\t', 'Hello\n')
     i.stack = [0]
     with pytest.raises(ValueError):
         i.exec_input_output()
 
 
-@pytest.mark.parametrize('inp', [''.join([str(x) for x in range(y, 0, -1)])
+def test_exec_input_output_raises_error_when_reading_terminal_as_num():
+    """Test that exec_inout_output raises ValueError for reading terminal as num."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t', '\n')
+    i.stack = [0]
+    with pytest.raises(ValueError):
+        i.exec_input_output()
+
+
+def test_exec_input_output_raises_error_when_reading_num_with_no_terminal():
+    """Test exec_inout_output raises SyntaxError for reading num with no terminal."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t', '1234')
+    i.stack = [0]
+    with pytest.raises(SyntaxError):
+        i.exec_input_output()
+
+
+@pytest.mark.parametrize('inp', [(''.join([str(x) for x in range(y, 0, -1)]) + '\n')
                                  for y in range(3, 7)])
 def test_exec_input_output_stores_num_from_input_as_int_in_heap(inp):
     """Test that the number from input is stored in heap as int."""
@@ -604,7 +632,7 @@ def test_exec_input_output_stores_num_from_input_as_int_in_heap(inp):
     i = SpaceInterpreter('\t\t', inp)
     i.stack = [0]
     i.exec_input_output()
-    assert i.heap[0] == int(inp[0])
+    assert i.heap[0] == int(inp)
 
 
 def test_exec_flow_control_raises_error_for_invalid_command():

@@ -98,6 +98,8 @@ class SpaceInterpreter(object):
 
         elif command == '\t ':
             n = self.parse_num()
+            if n < 0:
+                raise IndexError('Duplication value is outside of stack.')
             try:
                 self.stack.append(self.stack[-(n + 1)])
             except IndexError:
@@ -160,7 +162,7 @@ class SpaceInterpreter(object):
         elif command == '\t ':
             if a == 0:
                 raise ZeroDivisionError('Cannot divide by zero.')
-            self.stack.append(b / a)
+            self.stack.append(b // a)
 
         elif command == '\t\t':
             if a == 0:
@@ -245,7 +247,12 @@ class SpaceInterpreter(object):
                 raise IOError('No more characters in input to read.')
 
             try:
-                value, self.input = int(self.input[0]), self.input[1:]
+                value, terminal, self.input = self.input.partition('\n')
+
+                if not terminal:
+                    raise SyntaxError('Number input must have a terminal.')
+
+                value = int(value)
                 address = self.stack.pop()
                 self.heap[address] = value
             except IndexError:
@@ -255,6 +262,8 @@ class SpaceInterpreter(object):
 
         else:
             raise SyntaxError('Invalid input/output command.')
+
+        return ''
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.
