@@ -183,13 +183,13 @@ class SpaceInterpreter(object):
         try:
             a = self.stack.pop()
         except IndexError:
-            raise IndexError('Not enough values in stack for operation.')
+            raise IndexError('Not enough values in stack to access heap.')
 
         if command == ' ':
             try:
                 b = self.stack.pop()
             except IndexError:
-                raise IndexError('Not enough values in stack for operation.')
+                raise IndexError('Not enough values in stack for heap operation.')
             self.heap[b] = a
 
         elif command == '\t':
@@ -221,19 +221,37 @@ class SpaceInterpreter(object):
             try:
                 return chr(self.stack.pop())
             except IndexError:
-                raise IndexError('Not enough values in stack for operation.')
+                raise IndexError('No values in stack to output.')
 
         elif command == ' \t':
             try:
                 return self.stack.pop()
             except IndexError:
-                raise IndexError('Not enough values in stack for operation.')
+                raise IndexError('No values in stack to output.')
 
         elif command == '\t ':
-            pass
+            if not self.input:
+                raise IOError('No more characters in input to read.')
+
+            try:
+                value, self.input = self.input[0], self.input[1:]
+                address = self.stack.pop()
+                self.heap[address] = ord(value)
+            except IndexError:
+                raise IndexError('Not enough values in stack to acess heap')
 
         elif command == '\t\t':
-            pass
+            if not self.input:
+                raise IOError('No more characters in input to read.')
+
+            try:
+                value, self.input = int(self.input[0]), self.input[1:]
+                address = self.stack.pop()
+                self.heap[address] = value
+            except IndexError:
+                raise IndexError('Not enough values in stack to acess heap')
+            except ValueError:
+                raise ValueError('Cannot parse input as a number.')
 
         else:
             raise ValueError('Invalid input/output command.')

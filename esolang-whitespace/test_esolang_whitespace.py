@@ -544,6 +544,69 @@ def test_exec_input_output_can_output_top_of_stack_as_number(stack):
     assert output == stack[-1]
 
 
+def test_exec_input_output_raises_error_when_reading_char_from_empty_input():
+    """Test that exec_inout_output raises IOError reading from empty input."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t ')
+    with pytest.raises(IOError):
+        i.exec_input_output()
+
+
+def test_exec_input_output_raises_error_when_reading_char_for_empty_stack():
+    """Test that exec_inout_output raises IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t ', 'Hello')
+    with pytest.raises(IndexError):
+        i.exec_input_output()
+
+
+@pytest.mark.parametrize('inp', [''.join([chr(x + 33) for x in range(y, 0, -1)])
+                                 for y in range(1, 94, 5)])
+def test_exec_input_output_stores_char_from_input_as_ascii_in_heap(inp):
+    """Test that the character from input is stored in heap as its ASCII value."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t ', inp)
+    i.stack = [0]
+    i.exec_input_output()
+    assert i.heap[0] == ord(inp[0])
+
+
+def test_exec_input_output_raises_error_when_reading_num_from_empty_input():
+    """Test that exec_inout_output raises IOError reading from empty input."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t')
+    with pytest.raises(IOError):
+        i.exec_input_output()
+
+
+def test_exec_input_output_raises_error_when_reading_num_for_empty_stack():
+    """Test that exec_inout_output raises IndexError for empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t', '1241')
+    with pytest.raises(IndexError):
+        i.exec_input_output()
+
+
+def test_exec_input_output_raises_error_when_reading_non_number_as_num():
+    """Test that exec_inout_output raises ValueError for reading char as num."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t', 'Hello')
+    i.stack = [0]
+    with pytest.raises(ValueError):
+        i.exec_input_output()
+
+
+@pytest.mark.parametrize('inp', [''.join([str(x) for x in range(y, 0, -1)])
+                                 for y in range(3, 7)])
+def test_exec_input_output_stores_num_from_input_as_int_in_heap(inp):
+    """Test that the number from input is stored in heap as int."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t', inp)
+    i.stack = [0]
+    i.exec_input_output()
+    assert i.heap[0] == int(inp[0])
+
+
 def test_exec_flow_control_raises_error_for_invalid_command():
     """Test exec_flow_control raises a ValueError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
