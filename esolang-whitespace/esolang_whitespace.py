@@ -113,48 +113,76 @@ class SpaceInterpreter(object):
 
         if command[0] == ' ':
             self.p -= 1
-            num, delta = self.parse_num(self.code[self.p:])
-            self.p += delta
-            self.stack.append(num)
+            self.stack, delta = self._push(self.stack, self.code[self.p:])
 
         elif command == '\t ':
-            n, delta = self.parse_num(self.code[self.p:])
-            self.p += delta
-            if n < 0:
-                raise IndexError('Duplication value is outside of stack.')
-            try:
-                self.stack.append(self.stack[-(n + 1)])
-            except IndexError:
-                raise IndexError('Duplication value is outside of stack.')
+            self.stack, delta = self._duplicate_nth_value(self.stack, self.code[self.p:])
 
         elif command == '\t\n':
-            n, delta = self.parse_num(self.code[self.p:])
-            self.p += delta
-            if n < 0:
-                self.stack = self.stack[-1:]
-            else:
-                self.stack = self.stack[:-(n + 1)] + self.stack[-1:]
+            self.stack, delta = self._discard_below_top_value(self.stack, self.code[self.p:])
 
         elif command == '\n ':
-            try:
-                self.stack.append(self.stack[-1])
-            except IndexError:
-                raise IndexError('Cannot duplicate from empty stack.')
+            self.stack, delta = self._duplicate_top_value(self.stack)
 
         elif command == '\n\t':
-            try:
-                self.stack[-1], self.stack[-2] = self.stack[-2], self.stack[-1]
-            except IndexError:
-                raise IndexError('Not enough values in stack to swap.')
+            self.stack, delta = self._swap_top_two_values(self.stack)
 
         elif command == '\n\n':
-            try:
-                self.stack.pop()
-            except IndexError:
-                raise IndexError('Cannot discard from empty stack.')
+            self.stack, delta = self._discard_top_value(self.stack)
 
         else:
             raise SyntaxError('Invalid stack manipulation command.')
+
+        self.p += delta
+
+    def _push(self, stack, code):
+        """Push a number onto the memory stack."""
+        num, delta = self.parse_num(code)
+        return stack + [num], delta
+
+    def _duplicate_top_value(self, stack, code=None):
+        """Push a duplicate of the top value onto the stack."""
+        if not stack:
+            raise IndexError('Cannot duplicate from empty stack.')
+        return stack + stack[-1:], 0
+
+    def _duplicate_nth_value(self, stack, code):
+        """Push a duplicate of the nth value onto the stack."""
+        if not stack:
+            raise IndexError('Cannot duplicate from empty stack.')
+
+        n, delta = self.parse_num(code)
+
+        if n < 0 or n > len(stack):
+            raise IndexError('Duplication value is outside of stack.')
+
+        return stack + [stack[-(n + 1)]], delta
+
+    def _discard_top_value(self, stack, code=None):
+        """Discard the top value from the stack."""
+        if not stack:
+            raise IndexError('Cannot discard from empty stack.')
+        return stack[:-1], 0
+
+    def _discard_below_top_value(self, stack, code):
+        """Discard top num values below top of stack.
+
+        num < 0 and num >= len(stack) discards all but top.
+        """
+        n, delta = self.parse_num(code)
+        if n < 0:
+            stack = stack[-1:]
+        else:
+            stack = stack[:-(n + 1)] + stack[-1:]
+        return stack, delta
+
+    def _swap_top_two_values(self, stack, code=None):
+        """Swap the top two values on the stack."""
+        if not stack or len(stack) == 1:
+            raise IndexError('Not enough values in stack to swap.')
+        stack = stack[:]
+        stack[-1], stack[-2] = stack[-2], stack[-1]
+        return stack, 0
 
     def exec_arithmetic(self):
         """Execute commands for the Arithmetic IMP.
@@ -316,24 +344,24 @@ class SpaceInterpreter(object):
             label, delta = self.parse_label(self.code[self.p:])
             self.p += delta
             self._call_stack.append(0)
-            self._jump_pointer(label)
+            self.p = self._jump_pointer(label, self.labels)
 
         elif command == ' \n':
             label, delta = self.parse_label(self.code[self.p:])
             self.p += delta
-            self._jump_pointer(label)
+            self.p = self._jump_pointer(label, self.labels)
 
         elif command == '\t ':
             label, delta = self.parse_label(self.code[self.p:])
             self.p += delta
             if self.stack.pop() == 0:
-                self._jump_pointer(label)
+                self.p = self._jump_pointer(label, self.labels)
 
         elif command == '\t\t':
             label, delta = self.parse_label(self.code[self.p:])
             self.p += delta
             if self.stack.pop() < 0:
-                self._jump_pointer(label)
+                self.p = self._jump_pointer(label, self.labels)
 
         elif command == '\t\n':
             if len(self._call_stack) - 1:
@@ -345,10 +373,10 @@ class SpaceInterpreter(object):
         else:
             raise SyntaxError('Invalid flow control command.')
 
-    def _jump_pointer(self, label):
-        """Jump the pointer to the given labeled position."""
+    def _jump_pointer(self, label, labels, code=None):
+        """Get the new position of pointer given by the label."""
         try:
-            self.p = self.labels[label]
+            return labels[label]
         except KeyError:
             raise NameError('Label is not defined.')
 
@@ -363,7 +391,7 @@ class SpaceInterpreter(object):
 
         Raises ValueError for unclean termination.
 
-        Returns: the evaluated number,
+        Returns: the evaluated number, the change in the pointer's postion
         """
         if not code:
             raise SyntaxError('Numbers cannot be empty.')
@@ -390,6 +418,8 @@ class SpaceInterpreter(object):
         """Parse and validate the next label in the code.
 
         Labels consist of any number of t and s ending with a [terminal], n.
+
+        Returns: the label, the change in the pointer's postion
         """
         if not code:
             raise SyntaxError('Labels cannot be empty.')
