@@ -297,29 +297,44 @@ class SpaceInterpreter(object):
         if command == '  ':
             label = self.parse_label()
             if label in self.labels:
-                raise NameError('Cannot redeclare a label.')
+                raise NameError('Cannot redefine a label.')
             self.labels[label] = self.p
 
         elif command == ' \t':
-            pass
+            label = self.parse_label()
+            self._call_stack.append(0)
+            self._jump_pointer(label)
 
         elif command == ' \n':
-            pass
+            label = self.parse_label()
+            self._jump_pointer(label)
 
         elif command == '\t ':
-            pass
+            label = self.parse_label()
+            if self.stack.pop() == 0:
+                self._jump_pointer(label)
 
         elif command == '\t\t':
-            pass
+            label = self.parse_label()
+            if self.stack.pop() < 0:
+                self._jump_pointer(label)
 
         elif command == '\t\n':
-            pass
+            if len(self._call_stack) - 1:
+                self._call_stack.pop()
 
         elif command == '\n\n':
             return True
 
         else:
             raise SyntaxError('Invalid flow control command.')
+
+    def _jump_pointer(self, label):
+        """Jump the pointer to the given labeled position."""
+        try:
+            self.p = self.labels[label]
+        except KeyError:
+            raise NameError('Label is not defined.')
 
     def parse_num(self):
         """Parse and evaluate the next number in the code.

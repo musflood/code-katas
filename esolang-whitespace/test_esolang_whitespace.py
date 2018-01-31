@@ -747,7 +747,199 @@ def test_exec_flow_control_can_mark_current_location_with_label():
     assert i.labels == {'\t': 4}
 
 
-def test_execute_flow_control_exit_command_ends_program():
+def test_exec_flow_control_calling_subroutine_with_bad_label_raises_error():
+    """Test exec_flow_control raises a NameError for a undefined label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \t\t\n')
+    with pytest.raises(NameError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_moves_pointer_to_labeled_suroutine():
+    """Test exec_flow_control moves pointer to subroutine at the label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.exec_flow_control()
+    assert i.p == 9
+
+
+def test_exec_flow_control_adds_level_to_call_stack_keeping_prev_position():
+    """Test exec_flow_control adds level to call-stack on top of prev position."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    assert len(i._call_stack) == 1
+    i.exec_flow_control()
+    assert len(i._call_stack) == 2
+    assert i._call_stack[0] == 4
+    assert i._call_stack[1] == 9
+
+
+def test_exec_flow_control_jump_unconditionally_with_bad_label_raises_error():
+    """Test exec_flow_control raises a NameError for a undefined label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \n\t\n')
+    with pytest.raises(NameError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_jumps_pointer_unconditionally_to_label():
+    """Test exec_flow_control jumps pointer unconditionally to the label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \n\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.exec_flow_control()
+    assert i.p == 9
+
+
+def test_exec_flow_control_jumps_current_pointer_unconditionally():
+    """Test exec_flow_control does not add to call stack when jumping pointer."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(' \n\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    assert len(i._call_stack) == 1
+    i.exec_flow_control()
+    assert len(i._call_stack) == 1
+
+
+def test_exec_flow_control_jump_when_zero_with_bad_label_raises_error():
+    """Test exec_flow_control raises a NameError for a undefined label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\n')
+    i.stack = [0]
+    with pytest.raises(NameError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_jump_when_zero_empty_stack_raises_error():
+    """Test exec_flow_control jump raises IndexError for an empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\n\t\n  ')
+    i.labels = {'\t': 9}
+    with pytest.raises(IndexError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_jump_when_zero_moves_pointer_when_popping_zero():
+    """Test exec_flow_control jumps pointer to the label when stack top is zero."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [0]
+    i.exec_flow_control()
+    assert i.p == 9
+
+
+def test_exec_flow_control_jumps_current_pointer_when_zero():
+    """Test exec_flow_control does not add to call stack when jumping pointer."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [0]
+    assert len(i._call_stack) == 1
+    i.exec_flow_control()
+    assert len(i._call_stack) == 1
+
+
+def test_exec_flow_control_jump_when_zero_does_not_move_pointer_for_non_zero():
+    """Test exec_flow_control does not jump pointer when stack top is not zero."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t \t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [5]
+    i.exec_flow_control()
+    assert i.p == 4
+
+
+def test_exec_flow_control_jump_when_neg_with_bad_label_raises_error():
+    """Test exec_flow_control raises a NameError for a undefined label."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n')
+    i.stack = [-5]
+    with pytest.raises(NameError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_jump_when_neg_empty_stack_raises_error():
+    """Test exec_flow_control jump raises IndexError for an empty stack."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    with pytest.raises(IndexError):
+        i.exec_flow_control()
+
+
+def test_exec_flow_control_jump_when_neg_moves_pointer_when_popping_neg():
+    """Test exec_flow_control jumps pointer to the label when stack top is neg."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [-5]
+    i.exec_flow_control()
+    assert i.p == 9
+
+
+def test_exec_flow_control_jumps_current_pointer_when_neg():
+    """Test exec_flow_control does not add to call stack when jumping pointer."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [-5]
+    assert len(i._call_stack) == 1
+    i.exec_flow_control()
+    assert len(i._call_stack) == 1
+
+
+def test_exec_flow_control_jump_when_neg_does_not_move_pointer_for_pos_num():
+    """Test exec_flow_control does not jump pointer when stack top is pos."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [5]
+    i.exec_flow_control()
+    assert i.p == 4
+
+
+def test_exec_flow_control_jump_when_neg_does_not_move_pointer_for_zero():
+    """Test exec_flow_control does not jump pointer when stack top is zero."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\t\t\n\t\n  ')
+    i.labels = {'\t': 9}
+    i.stack = [0]
+    i.exec_flow_control()
+    assert i.p == 4
+
+
+def test_exec_flow_control_exit_command_from_subroutine_returns_to_call_position():
+    """Test exec_flow_control sub exit returns control to where it was called."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n')
+    i._call_stack = [8, 0]
+    i.exec_flow_control()
+    assert i.p == 8
+    assert len(i._call_stack) == 1
+
+
+def test_exec_flow_control_exit_command_from_subroutine_does_not_exit_program():
+    """Test exec_flow_control subroutine exit does not exit program."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n')
+    i._call_stack = [0]
+    assert i.exec_flow_control() is not True
+
+
+def test_exec_flow_control_exit_command_from_subroutine_does_nothing_not_in_sub():
+    """Test exec_flow_control sub exit does nothing if not in subroutine."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\t\n')
+    i._call_stack = [0]
+    i.exec_flow_control()
+    assert i.p == 2
+    assert len(i._call_stack) == 1
+
+
+def test_exec_flow_control_exit_command_ends_program():
     """Test that execute_flow_control can end the program."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\n')
