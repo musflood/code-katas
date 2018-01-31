@@ -83,10 +83,18 @@ class SpaceInterpreter(object):
                 self.p -= 1
                 if self.exec_flow_control():
                     break
+
+            else:
+                raise SyntaxError('Invalid instruction modification parameter.')
+
         else:
             raise SyntaxError('Code must terminate with an exit command.')
 
         return output
+
+    def find_labels(self):
+        """Run through the code to define all the labels used."""
+        pass
 
     def exec_manipulate_stack(self):
         """Execute commands for the Stack Manipulation IMP.
@@ -105,11 +113,13 @@ class SpaceInterpreter(object):
 
         if command[0] == ' ':
             self.p -= 1
-            num = self.parse_num()
+            num, delta = self.parse_num(self.code[self.p:])
+            self.p += delta
             self.stack.append(num)
 
         elif command == '\t ':
-            n = self.parse_num()
+            n, delta = self.parse_num(self.code[self.p:])
+            self.p += delta
             if n < 0:
                 raise IndexError('Duplication value is outside of stack.')
             try:
@@ -118,7 +128,8 @@ class SpaceInterpreter(object):
                 raise IndexError('Duplication value is outside of stack.')
 
         elif command == '\t\n':
-            n = self.parse_num()
+            n, delta = self.parse_num(self.code[self.p:])
+            self.p += delta
             if n < 0:
                 self.stack = self.stack[-1:]
             else:
@@ -295,27 +306,32 @@ class SpaceInterpreter(object):
         self.p += 2
 
         if command == '  ':
-            label = self.parse_label()
+            label, delta = self.parse_label(self.code[self.p:])
+            self.p += delta
             if label in self.labels:
                 raise NameError('Cannot redefine a label.')
             self.labels[label] = self.p
 
         elif command == ' \t':
-            label = self.parse_label()
+            label, delta = self.parse_label(self.code[self.p:])
+            self.p += delta
             self._call_stack.append(0)
             self._jump_pointer(label)
 
         elif command == ' \n':
-            label = self.parse_label()
+            label, delta = self.parse_label(self.code[self.p:])
+            self.p += delta
             self._jump_pointer(label)
 
         elif command == '\t ':
-            label = self.parse_label()
+            label, delta = self.parse_label(self.code[self.p:])
+            self.p += delta
             if self.stack.pop() == 0:
                 self._jump_pointer(label)
 
         elif command == '\t\t':
-            label = self.parse_label()
+            label, delta = self.parse_label(self.code[self.p:])
+            self.p += delta
             if self.stack.pop() < 0:
                 self._jump_pointer(label)
 
@@ -336,7 +352,7 @@ class SpaceInterpreter(object):
         except KeyError:
             raise NameError('Label is not defined.')
 
-    def parse_num(self):
+    def parse_num(self, code):
         """Parse and evaluate the next number in the code.
 
         Numbers consist of [sign][binary][terminal].
@@ -346,41 +362,43 @@ class SpaceInterpreter(object):
         terminal: n
 
         Raises ValueError for unclean termination.
+
+        Returns: the evaluated number,
         """
-        if not self.code[self.p:]:
+        if not code:
             raise SyntaxError('Numbers cannot be empty.')
 
-        if self.code[self.p] == '\n':
+        if code[0] == '\n':
             raise SyntaxError('Numbers cannot be only a terminal.')
 
-        sign = 1 if self.code[self.p] == ' ' else -1
-        self.p += 1
+        sign = 1 if code[0] == ' ' else -1
+        position = 1
         num = '0'
-        while self.p < len(self.code):
-            if self.code[self.p] == '\n':
+        while position < len(code):
+            if code[position] == '\n':
                 break
-            num += '0' if self.code[self.p] == ' ' else '1'
-            self.p += 1
+            num += '0' if code[position] == ' ' else '1'
+            position += 1
         else:
             raise SyntaxError('Number must end with a terminal.')
 
         num = sign * int(num, 2)
-        self.p += 1
-        return num
+        position += 1
+        return num, position
 
-    def parse_label(self):
+    def parse_label(self, code):
         """Parse and validate the next label in the code.
 
         Labels consist of any number of t and s ending with a [terminal], n.
         """
-        if not self.code[self.p:]:
+        if not code:
             raise SyntaxError('Labels cannot be empty.')
 
-        label, terminal, _ = self.code[self.p:].partition('\n')
+        label, terminal, _ = code.partition('\n')
 
         if not terminal:
             raise SyntaxError('Lables must end with a terminal')
 
-        self.p += len(label) + 1
+        position = len(label) + 1
 
-        return label
+        return label, position

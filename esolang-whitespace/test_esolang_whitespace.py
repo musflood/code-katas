@@ -176,23 +176,23 @@ def test_parse_num_empty_number_raises_error():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('')
     with pytest.raises(SyntaxError):
-        i.parse_num()
+        i.parse_num('')
 
 
 def test_parse_num_only_terminal_raises_error():
     """Test that parsing terminal only number raises a SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\n')
+    i = SpaceInterpreter('')
     with pytest.raises(SyntaxError):
-        i.parse_num()
+        i.parse_num('\n')
 
 
 def test_parse_num_raises_error_for_unterminated_number():
     """Test that parsing number with no terminal raises SyntaxError."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(' \t\t \t')
+    i = SpaceInterpreter('')
     with pytest.raises(SyntaxError):
-        i.parse_num()
+        i.parse_num(' \t\t \t')
 
 
 CODES = [
@@ -207,8 +207,9 @@ CODES = [
 def test_parse_num_parses_positive_numbers_correctly(code, output):
     """Test that parse_num can parse positive numbers."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(code)
-    assert i.parse_num() == output
+    i = SpaceInterpreter('')
+    num, _ = i.parse_num(code)
+    assert num == output
 
 
 CODES = [
@@ -222,8 +223,9 @@ CODES = [
 def test_parse_num_parses_negative_numbers_correctly(code, output):
     """Test that parse_num can parse negative numbers."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(code)
-    assert i.parse_num() == output
+    i = SpaceInterpreter('')
+    num, _ = i.parse_num(code)
+    assert num == output
 
 
 CODES = [
@@ -236,9 +238,9 @@ CODES = [
 def test_parse_num_moves_pointer_to_end_of_number_code(code, pointer):
     """Test that parse_num moves the pointer to the end of the number."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(code)
-    i.parse_num()
-    assert i.p == pointer
+    i = SpaceInterpreter('')
+    _, delta = i.parse_num(code)
+    assert delta == pointer
 
 
 def test_parse_label_raises_error_for_empty_label():
@@ -246,40 +248,39 @@ def test_parse_label_raises_error_for_empty_label():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('')
     with pytest.raises(SyntaxError):
-        i.parse_label()
+        i.parse_label('')
 
 
 def test_parse_label_raises_error_for_non_terminated_label():
     """Test that parse_label raises a SyntaxError for non terminated label."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(' \t \t')
+    i = SpaceInterpreter('')
     with pytest.raises(SyntaxError):
-        i.parse_label()
+        i.parse_label(' \t \t')
 
 
 def test_parse_label_returns_label_without_terminal():
     """Test that parse_label returns the label without the terminal char."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter(' \t \t \n')
-    label = i.parse_label()
+    i = SpaceInterpreter('')
+    label, _ = i.parse_label(' \t \t \n')
     assert label == ' \t \t '
 
 
 def test_parse_label_can_parse_terminal_as_label():
     """Test that parse_label accepts just a terminal as a valid label."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\n')
-    label = i.parse_label()
+    i = SpaceInterpreter('')
+    label, _ = i.parse_label('\n')
     assert label == ''
 
 
 def test_parse_label_moves_pointer_to_after_label():
     """Test that parse_label moves the pointer to after the label terminal."""
     from esolang_whitespace import SpaceInterpreter
-    i = SpaceInterpreter('\t\t\n  \t')
-    assert i.p == 0
-    i.parse_label()
-    assert i.p == 3
+    i = SpaceInterpreter('')
+    _, delta = i.parse_label('\t\t\n  \t')
+    assert delta == 3
 
 
 def test_exec_manipulate_stack_raises_error_for_invalid_command():
