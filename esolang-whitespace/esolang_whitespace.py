@@ -46,6 +46,11 @@ class SpaceInterpreter(object):
             '\t\t': '%'
         }
 
+        self._HEAP_IMP = {
+            ' ': self._stack_to_heap,
+            '\t': self._heap_to_stack
+        }
+
     @property
     def p(self):
         """Get the current position of the pointer."""
@@ -213,10 +218,12 @@ class SpaceInterpreter(object):
 
     def _stack_artithmetic(self, op, stack):
         """Execute operation on the top two values of the stack."""
+        stack = stack[:]
         try:
-            a, b = stack[-1], stack[-2]
+            a, b = stack.pop(), stack.pop()
             result = eval('b{op}a'.format(op=op))
-            return stack[:-2] + [result]
+            stack.append(result)
+            return stack
 
         except IndexError:
             raise IndexError('Not enough values in stack for operation.')
@@ -230,29 +237,47 @@ class SpaceInterpreter(object):
             s - Pop a and b, then store a at heap address b
             t - Pop a, then push the value at heap address a onto stack
         """
-        command = self.code[self.p:self.p + 1]
+        cmd_string = self.code[self.p:self.p + 1]
         self.p += 1
 
         try:
-            a = self.stack.pop()
+            command = self._HEAP_IMP[cmd_string]
+            self.stack, self.heap = command(self.stack, self.heap)
+
+        except KeyError:
+            raise SyntaxError('Invalid stack manipulation command.')
+
+    def _stack_to_heap(self, stack, heap):
+        """Move a value from the stack to the heap.
+
+        Pop a value and address, then store the value at that heap address.
+        """
+        stack = stack[:]
+        heap = heap.copy()
+        try:
+            value, address = stack.pop(), stack.pop()
+            heap[address] = value
+            return stack, heap
+
         except IndexError:
-            raise IndexError('Not enough values in stack to access heap.')
+            raise IndexError('Not enough values in stack for heap operation.')
 
-        if command == ' ':
-            try:
-                b = self.stack.pop()
-            except IndexError:
-                raise IndexError('Not enough values in stack for heap operation.')
-            self.heap[b] = a
+    def _heap_to_stack(self, stack, heap):
+        """Move a value from the heap to the stack.
 
-        elif command == '\t':
-            try:
-                self.stack.append(self.heap[a])
-            except KeyError:
-                raise NameError('Invalid heap address.')
+        Pop an address, then push the value at that heap address onto stack.
+        """
+        stack = stack[:]
+        heap = heap.copy()
+        try:
+            address = stack.pop()
+            stack.append(heap[address])
+            return stack, heap
 
-        else:
-            raise SyntaxError('Invalid heap access command.')
+        except IndexError:
+            raise IndexError('Not enough values in stack for heap operation.')
+        except KeyError:
+            raise NameError('Invalid heap address.')
 
     def exec_input_output(self):
         """Execute commands for the Input/Output IMP.
