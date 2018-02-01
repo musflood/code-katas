@@ -27,6 +27,25 @@ class SpaceInterpreter(object):
 
         self._call_stack = [0]
 
+        # All commands #
+
+        self._STACK_IMP = {
+            ' ': self._push,
+            '\t ': self._duplicate_nth_value,
+            '\t\n': self._discard_below_top_value,
+            '\n ': self._duplicate_top_value,
+            '\n\t': self._swap_top_two_values,
+            '\n\n': self._discard_top_value
+        }
+
+        self._ARITH_IMP = {
+            '  ': '+',
+            ' \t': '-',
+            ' \n': '*',
+            '\t ': '//',
+            '\t\t': '%'
+        }
+
     @property
     def p(self):
         """Get the current position of the pointer."""
@@ -108,39 +127,27 @@ class SpaceInterpreter(object):
             nt - Swap top two values on stack
             nn - Discard top value on stack
         """
-        command = self.code[self.p:self.p + 2]
+        cmd_string = self.code[self.p:self.p + 2]
         self.p += 2
 
-        if command[0] == ' ':
+        if cmd_string not in self._STACK_IMP:
             self.p -= 1
-            self.stack, delta = self._push(self.stack, self.code[self.p:])
+            cmd_string = cmd_string[0]
 
-        elif command == '\t ':
-            self.stack, delta = self._duplicate_nth_value(self.stack, self.code[self.p:])
+        try:
+            command = self._STACK_IMP[cmd_string]
+            self.stack, delta = command(self.stack, self.code[self.p:])
+            self.p += delta
 
-        elif command == '\t\n':
-            self.stack, delta = self._discard_below_top_value(self.stack, self.code[self.p:])
-
-        elif command == '\n ':
-            self.stack, delta = self._duplicate_top_value(self.stack)
-
-        elif command == '\n\t':
-            self.stack, delta = self._swap_top_two_values(self.stack)
-
-        elif command == '\n\n':
-            self.stack, delta = self._discard_top_value(self.stack)
-
-        else:
+        except KeyError:
             raise SyntaxError('Invalid stack manipulation command.')
-
-        self.p += delta
 
     def _push(self, stack, code):
         """Push a number onto the memory stack."""
         num, delta = self.parse_num(code)
         return stack + [num], delta
 
-    def _duplicate_top_value(self, stack, code=None):
+    def _duplicate_top_value(self, stack, *args):
         """Push a duplicate of the top value onto the stack."""
         if not stack:
             raise IndexError('Cannot duplicate from empty stack.')
@@ -158,7 +165,7 @@ class SpaceInterpreter(object):
 
         return stack + [stack[-(n + 1)]], delta
 
-    def _discard_top_value(self, stack, code=None):
+    def _discard_top_value(self, stack, *args):
         """Discard the top value from the stack."""
         if not stack:
             raise IndexError('Cannot discard from empty stack.')
@@ -176,7 +183,7 @@ class SpaceInterpreter(object):
             stack = stack[:-(n + 1)] + stack[-1:]
         return stack, delta
 
-    def _swap_top_two_values(self, stack, code=None):
+    def _swap_top_two_values(self, stack, *args):
         """Swap the top two values on the stack."""
         if not stack or len(stack) == 1:
             raise IndexError('Not enough values in stack to swap.')
@@ -194,34 +201,27 @@ class SpaceInterpreter(object):
             ts - Pop a and b, then push b//a - Raises ZeroDivisionError
             tt - Pop a and b, then push b%a - Raises ZeroDivisionError
         """
-        command = self.code[self.p:self.p + 2]
+        cmd_string = self.code[self.p:self.p + 2]
         self.p += 2
+
         try:
-            a, b = self.stack.pop(), self.stack.pop()
+            op = self._ARITH_IMP[cmd_string]
+            self.stack = self._stack_artithmetic(op, self.stack)
+
+        except KeyError:
+            raise SyntaxError('Invalid arithmetic command.')
+
+    def _stack_artithmetic(self, op, stack):
+        """Execute operation on the top two values of the stack."""
+        try:
+            a, b = stack[-1], stack[-2]
+            result = eval('b{op}a'.format(op=op))
+            return stack[:-2] + [result]
+
         except IndexError:
             raise IndexError('Not enough values in stack for operation.')
-
-        if command == '  ':
-            self.stack.append(a + b)
-
-        elif command == ' \t':
-            self.stack.append(b - a)
-
-        elif command == ' \n':
-            self.stack.append(a * b)
-
-        elif command == '\t ':
-            if a == 0:
-                raise ZeroDivisionError('Cannot divide by zero.')
-            self.stack.append(b // a)
-
-        elif command == '\t\t':
-            if a == 0:
-                raise ZeroDivisionError('Cannot divide by zero.')
-            self.stack.append(b % a)
-
-        else:
-            raise SyntaxError('Invalid arithmetic command.')
+        except ZeroDivisionError:
+            raise ZeroDivisionError('Cannot divide by zero.')
 
     def exec_heap_access(self):
         """Execute commands for the Heap Access IMP.
@@ -373,7 +373,7 @@ class SpaceInterpreter(object):
         else:
             raise SyntaxError('Invalid flow control command.')
 
-    def _jump_pointer(self, label, labels, code=None):
+    def _jump_pointer(self, label, labels, *args):
         """Get the new position of pointer given by the label."""
         try:
             return labels[label]
