@@ -51,6 +51,13 @@ class SpaceInterpreter(object):
             '\t': self._heap_to_stack
         }
 
+        self._IO_IMP = {
+            '  ': self._output_character,
+            ' \t': self._output_number,
+            '\t ': self._input_character,
+            '\t\t': self._input_number
+        }
+
     @property
     def p(self):
         """Get the current position of the pointer."""
@@ -245,7 +252,7 @@ class SpaceInterpreter(object):
             self.stack, self.heap = command(self.stack, self.heap)
 
         except KeyError:
-            raise SyntaxError('Invalid stack manipulation command.')
+            raise SyntaxError('Invalid heap access command.')
 
     def _stack_to_heap(self, stack, heap):
         """Move a value from the stack to the heap.
@@ -292,54 +299,80 @@ class SpaceInterpreter(object):
 
         Return: Output string
         """
-        command = self.code[self.p:self.p + 2]
+        cmd_string = self.code[self.p:self.p + 2]
         self.p += 2
 
-        if command == '  ':
-            try:
-                return chr(self.stack.pop())
-            except IndexError:
-                raise IndexError('No values in stack to output.')
+        try:
+            command = self._IO_IMP[cmd_string]
+            result = command(self.stack, self.heap, self.input)
+            output, self.stack, self.heap, self.input = result
 
-        elif command == ' \t':
-            try:
-                return str(self.stack.pop())
-            except IndexError:
-                raise IndexError('No values in stack to output.')
-
-        elif command == '\t ':
-            if not self.input:
-                raise IOError('No more characters in input to read.')
-
-            try:
-                value, self.input = self.input[0], self.input[1:]
-                address = self.stack.pop()
-                self.heap[address] = ord(value)
-            except IndexError:
-                raise IndexError('Not enough values in stack to acess heap')
-
-        elif command == '\t\t':
-            if not self.input:
-                raise IOError('No more characters in input to read.')
-
-            try:
-                value, terminal, self.input = self.input.partition('\n')
-
-                if not terminal:
-                    raise SyntaxError('Number input must have a terminal.')
-
-                value = int(value)
-                address = self.stack.pop()
-                self.heap[address] = value
-            except IndexError:
-                raise IndexError('Not enough values in stack to acess heap')
-            except ValueError:
-                raise ValueError('Cannot parse input as a number.')
-
-        else:
+        except KeyError:
             raise SyntaxError('Invalid input/output command.')
 
-        return ''
+        return output
+
+    def _output_character(self, stack, heap, inp):
+        """Output the top value on the stack as a character."""
+        try:
+            return chr(stack[-1]), stack[:-1], heap, inp
+        except IndexError:
+            raise IndexError('No values in stack to output.')
+
+    def _output_number(self, stack, heap, inp):
+        """Output the top value on the stack as a number."""
+        try:
+            return str(stack[-1]), stack[:-1], heap, inp
+        except IndexError:
+            raise IndexError('No values in stack to output.')
+
+    def _input_character(self, stack, heap, inp):
+        """Read a character from input and store it in the heap.
+
+        Uses the value from the top of the stack as the heap address
+        and stores the ASCII value of the character.
+        """
+        if not inp:
+            raise IOError('No more characters in input to read.')
+
+        heap = heap.copy()
+
+        try:
+            value, inp = inp[0], inp[1:]
+            address = stack[-1]
+            heap[address] = ord(value)
+
+            return '', stack[:-1], heap, inp
+
+        except IndexError:
+            raise IndexError('Not enough values in stack to acess heap')
+
+    def _input_number(self, stack, heap, inp):
+        """Read a number from the input and store it in the heap.
+
+        Uses the value from the top of the stack as the heap address.
+        """
+        if not inp:
+            raise IOError('No more characters in input to read.')
+
+        value, terminal, inp = inp.partition('\n')
+
+        if not terminal:
+            raise SyntaxError('Number input must have a terminal.')
+
+        heap = heap.copy()
+
+        try:
+            value = int(value)
+            address = stack[-1]
+            heap[address] = value
+
+            return '', stack[:-1], heap, inp
+
+        except IndexError:
+            raise IndexError('Not enough values in stack to acess heap')
+        except ValueError:
+            raise ValueError('Cannot parse input as a number.')
 
     def exec_flow_control(self):
         """Execute commands for the Flow Control IMP.
