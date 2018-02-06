@@ -58,6 +58,16 @@ class SpaceInterpreter(object):
             '\t\t': self._input_number
         }
 
+        self._FLOW_IMP = {
+            '  ': self._label_position,
+            ' \t': self._call_subroutine,
+            ' \n': self._jump_unconditionally,
+            '\t ': self._jump_zero_conditional,
+            '\t\t': self._jump_neg_conditional,
+            '\t\n': self._exit_subroutine,
+            '\n\n': self._exit_program
+        }
+
     @property
     def p(self):
         """Get the current position of the pointer."""
@@ -148,7 +158,7 @@ class SpaceInterpreter(object):
 
         try:
             command = self._STACK_IMP[cmd_string]
-            self.stack, delta = command(self.stack, self.code[self.p:])
+            delta = command(self.stack, self.code[self.p:])
             self.p += delta
 
         except KeyError:
@@ -157,13 +167,15 @@ class SpaceInterpreter(object):
     def _push(self, stack, code):
         """Push a number onto the memory stack."""
         num, delta = self.parse_num(code)
-        return stack + [num], delta
+        stack.append(num)
+        return delta
 
     def _duplicate_top_value(self, stack, *args):
         """Push a duplicate of the top value onto the stack."""
         if not stack:
             raise IndexError('Cannot duplicate from empty stack.')
-        return stack + stack[-1:], 0
+        stack.append(stack[-1])
+        return 0
 
     def _duplicate_nth_value(self, stack, code):
         """Push a duplicate of the nth value onto the stack."""
@@ -175,13 +187,16 @@ class SpaceInterpreter(object):
         if n < 0 or n > len(stack):
             raise IndexError('Duplication value is outside of stack.')
 
-        return stack + [stack[-(n + 1)]], delta
+        stack.append(stack[-(n + 1)])
+        return delta
 
     def _discard_top_value(self, stack, *args):
         """Discard the top value from the stack."""
         if not stack:
             raise IndexError('Cannot discard from empty stack.')
-        return stack[:-1], 0
+
+        stack.pop()
+        return 0
 
     def _discard_below_top_value(self, stack, code):
         """Discard top num values below top of stack.
@@ -189,19 +204,20 @@ class SpaceInterpreter(object):
         num < 0 and num >= len(stack) discards all but top.
         """
         n, delta = self.parse_num(code)
-        if n < 0:
-            stack = stack[-1:]
-        else:
-            stack = stack[:-(n + 1)] + stack[-1:]
-        return stack, delta
+
+        n = n if 0 <= n < len(stack) else len(stack) - 1
+
+        for _ in range(n):
+            stack.pop(-2)
+
+        return delta
 
     def _swap_top_two_values(self, stack, *args):
         """Swap the top two values on the stack."""
         if not stack or len(stack) == 1:
             raise IndexError('Not enough values in stack to swap.')
-        stack = stack[:]
         stack[-1], stack[-2] = stack[-2], stack[-1]
-        return stack, 0
+        return 0
 
     def exec_arithmetic(self):
         """Execute commands for the Arithmetic IMP.
@@ -218,14 +234,13 @@ class SpaceInterpreter(object):
 
         try:
             op = self._ARITH_IMP[cmd_string]
-            self.stack = self._stack_artithmetic(op, self.stack)
+            self._stack_artithmetic(op, self.stack)
 
         except KeyError:
             raise SyntaxError('Invalid arithmetic command.')
 
     def _stack_artithmetic(self, op, stack):
         """Execute operation on the top two values of the stack."""
-        stack = stack[:]
         try:
             a, b = stack.pop(), stack.pop()
             result = eval('b{op}a'.format(op=op))
@@ -249,7 +264,7 @@ class SpaceInterpreter(object):
 
         try:
             command = self._HEAP_IMP[cmd_string]
-            self.stack, self.heap = command(self.stack, self.heap)
+            command(self.stack, self.heap)
 
         except KeyError:
             raise SyntaxError('Invalid heap access command.')
@@ -259,12 +274,9 @@ class SpaceInterpreter(object):
 
         Pop a value and address, then store the value at that heap address.
         """
-        stack = stack[:]
-        heap = heap.copy()
         try:
             value, address = stack.pop(), stack.pop()
             heap[address] = value
-            return stack, heap
 
         except IndexError:
             raise IndexError('Not enough values in stack for heap operation.')
@@ -274,12 +286,9 @@ class SpaceInterpreter(object):
 
         Pop an address, then push the value at that heap address onto stack.
         """
-        stack = stack[:]
-        heap = heap.copy()
         try:
             address = stack.pop()
             stack.append(heap[address])
-            return stack, heap
 
         except IndexError:
             raise IndexError('Not enough values in stack for heap operation.')
@@ -304,29 +313,28 @@ class SpaceInterpreter(object):
 
         try:
             command = self._IO_IMP[cmd_string]
-            result = command(self.stack, self.heap, self.input)
-            output, self.stack, self.heap, self.input = result
+            output, self.input = command(self.input, self.stack, self.heap)
 
         except KeyError:
             raise SyntaxError('Invalid input/output command.')
 
         return output
 
-    def _output_character(self, stack, heap, inp):
+    def _output_character(self, inp, stack, *args):
         """Output the top value on the stack as a character."""
         try:
-            return chr(stack[-1]), stack[:-1], heap, inp
+            return chr(stack.pop()), inp
         except IndexError:
             raise IndexError('No values in stack to output.')
 
-    def _output_number(self, stack, heap, inp):
+    def _output_number(self, inp, stack, *args):
         """Output the top value on the stack as a number."""
         try:
-            return str(stack[-1]), stack[:-1], heap, inp
+            return str(stack.pop()), inp
         except IndexError:
             raise IndexError('No values in stack to output.')
 
-    def _input_character(self, stack, heap, inp):
+    def _input_character(self, inp, stack, heap):
         """Read a character from input and store it in the heap.
 
         Uses the value from the top of the stack as the heap address
@@ -335,19 +343,17 @@ class SpaceInterpreter(object):
         if not inp:
             raise IOError('No more characters in input to read.')
 
-        heap = heap.copy()
-
         try:
             value, inp = inp[0], inp[1:]
-            address = stack[-1]
+            address = stack.pop()
             heap[address] = ord(value)
 
-            return '', stack[:-1], heap, inp
+            return '', inp
 
         except IndexError:
             raise IndexError('Not enough values in stack to acess heap')
 
-    def _input_number(self, stack, heap, inp):
+    def _input_number(self, inp, stack, heap):
         """Read a number from the input and store it in the heap.
 
         Uses the value from the top of the stack as the heap address.
@@ -360,14 +366,12 @@ class SpaceInterpreter(object):
         if not terminal:
             raise SyntaxError('Number input must have a terminal.')
 
-        heap = heap.copy()
-
         try:
             value = int(value)
-            address = stack[-1]
+            address = stack.pop()
             heap[address] = value
 
-            return '', stack[:-1], heap, inp
+            return '', inp
 
         except IndexError:
             raise IndexError('Not enough values in stack to acess heap')
@@ -388,55 +392,72 @@ class SpaceInterpreter(object):
 
         Return: True - exit the program, False - continue
         """
-        command = self.code[self.p:self.p + 2]
+        cmd_string = self.code[self.p:self.p + 2]
         self.p += 2
 
-        if command == '  ':
-            label, delta = self.parse_label(self.code[self.p:])
-            self.p += delta
-            if label in self.labels:
-                raise NameError('Cannot redefine a label.')
-            self.labels[label] = self.p
+        try:
+            command = self._FLOW_IMP[cmd_string]
+            position, exit = command(code=self.code[self.p:], labels=self.labels,
+                                     call_stack=self._call_stack, stack=self.stack)
 
-        elif command == ' \t':
-            label, delta = self.parse_label(self.code[self.p:])
-            self.p += delta
-            self._call_stack.append(0)
-            self.p = self._jump_pointer(label, self.labels)
-
-        elif command == ' \n':
-            label, delta = self.parse_label(self.code[self.p:])
-            self.p += delta
-            self.p = self._jump_pointer(label, self.labels)
-
-        elif command == '\t ':
-            label, delta = self.parse_label(self.code[self.p:])
-            self.p += delta
-            if self.stack.pop() == 0:
-                self.p = self._jump_pointer(label, self.labels)
-
-        elif command == '\t\t':
-            label, delta = self.parse_label(self.code[self.p:])
-            self.p += delta
-            if self.stack.pop() < 0:
-                self.p = self._jump_pointer(label, self.labels)
-
-        elif command == '\t\n':
-            if len(self._call_stack) - 1:
-                self._call_stack.pop()
-
-        elif command == '\n\n':
-            return True
-
-        else:
+        except KeyError:
             raise SyntaxError('Invalid flow control command.')
 
-    def _jump_pointer(self, label, labels, *args):
+        self.p = position
+        return exit
+
+    def _label_position(self, code, labels, call_stack, **kwargs):
+        """Mark the current position with a unique label."""
+        label, delta = self.parse_label(code)
+        if label in labels:
+            raise NameError('Cannot redefine a label.')
+
+        position = call_stack[-1] + delta
+        labels[label] = position
+        return position, False
+
+    def _get_label_position(self, label, labels, **kwargs):
         """Get the new position of pointer given by the label."""
         try:
             return labels[label]
         except KeyError:
             raise NameError('Label is not defined.')
+
+    def _call_subroutine(self, code, labels, call_stack, **kwargs):
+        """Call the subroutine marked with the next label."""
+        label, delta = self.parse_label(code)
+        call_stack[-1] += delta
+        call_stack.append(0)
+        return self._get_label_position(label, labels), False
+
+    def _jump_unconditionally(self, code, labels, **kwargs):
+        """Jump the pointer unconditionally to the labeled position."""
+        label, _ = self.parse_label(code)
+        return self._get_label_position(label, labels), False
+
+    def _jump_zero_conditional(self, code, labels, call_stack, stack, **kwargs):
+        """Jump the pointer to the labeled position if top of stack is zero."""
+        label, delta = self.parse_label(code)
+        if stack.pop() == 0:
+            return self._get_label_position(label, labels), False
+        return call_stack[-1] + delta, False
+
+    def _jump_neg_conditional(self, code, labels, call_stack, stack, **kwargs):
+        """Jump the pointer to the labeled position if top of stack is negative."""
+        label, delta = self.parse_label(code)
+        if stack.pop() < 0:
+            return self._get_label_position(label, labels), False
+        return call_stack[-1] + delta, False
+
+    def _exit_subroutine(self, call_stack, **kwargs):
+        """Exit the current subroutine and return to where it was called."""
+        if len(call_stack) > 1:
+            call_stack.pop()
+        return call_stack[-1], False
+
+    def _exit_program(self, call_stack, **kwargs):
+        """Exit the program cleanly."""
+        return call_stack[-1], True
 
     def parse_num(self, code):
         """Parse and evaluate the next number in the code.
