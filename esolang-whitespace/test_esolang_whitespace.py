@@ -288,33 +288,32 @@ def test_exec_manipulate_stack_raises_error_for_invalid_command():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
     with pytest.raises(SyntaxError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\t\t', [], [0])
 
 
 def test_exec_manipulate_stack_can_push_number_onto_the_stack():
     """Test that exec_manipulate_stack can push a new value onto the stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  \n')
-    i.exec_manipulate_stack()
-    assert i.stack == [0]
+    stack = []
+    i.exec_manipulate_stack('  \n', stack, [0])
+    assert stack == [0]
 
 
 def test_exec_manipulate_stack_raises_error_duplicate_value_outside_stack():
     """Test exec_manipulate_stack raises an IndexError for index out of stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t  \t \n')
-    i.stack = [0]
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\t  \t \n', [0], [0])
 
 
 def test_exec_manipulate_stack_raises_error_duplicate_value_at_neg_index():
     """Test exec_manipulate_stack raises an IndexError for negative index."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\t\n')
-    i.stack = [0]
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\t \t\t\n', [0], [0])
 
 
 @pytest.mark.parametrize('num', [x for x in range(0, 5)])
@@ -322,9 +321,9 @@ def test_exec_manipulate_stack_can_duplicate_nth_value_from_top_of_stack(num):
     """Test that exec_manipulate_stack can duplicate nth value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ' + num_to_space(num))
-    i.stack = [0, 1, 2, 3, 4]
-    i.exec_manipulate_stack()
-    assert i.stack == [0, 1, 2, 3, 4, 4 - num]
+    stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack('\t ' + num_to_space(num), stack, [0])
+    assert stack == [0, 1, 2, 3, 4, 4 - num]
 
 
 @pytest.mark.parametrize('num', [x for x in range(-5, 0)])
@@ -332,9 +331,9 @@ def test_exec_manipulate_stack_discards_all_but_top_for_neg_num(num):
     """Test that all but top value is discarded for a negative n value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n' + num_to_space(num))
-    i.stack = [0, 1, 2, 3, 4]
-    i.exec_manipulate_stack()
-    assert i.stack == [4]
+    stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack('\t\n' + num_to_space(num), stack, [0])
+    assert stack == [4]
 
 
 @pytest.mark.parametrize('num', [x for x in range(5, 10)])
@@ -342,9 +341,9 @@ def test_exec_manipulate_stack_discards_all_but_top_for_large_num(num):
     """Test all but top value is discarded for n value larger than stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n' + num_to_space(num))
-    i.stack = [0, 1, 2, 3, 4]
-    i.exec_manipulate_stack()
-    assert i.stack == [4]
+    stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack('\t\n' + num_to_space(num), stack, [0])
+    assert stack == [4]
 
 
 @pytest.mark.parametrize('num', [x for x in range(0, 5)])
@@ -352,9 +351,9 @@ def test_exec_manipulate_stack_discards_top_n_values_below_top(num):
     """Test that the top n values below the top are discarded."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n' + num_to_space(num))
-    i.stack = [0, 1, 2, 3, 4]
-    i.exec_manipulate_stack()
-    assert i.stack == [0, 1, 2, 3, 4][:-(num + 1)] + [4]
+    stack = [0, 1, 2, 3, 4]
+    i.exec_manipulate_stack('\t\n' + num_to_space(num), stack, [0])
+    assert stack == [0, 1, 2, 3, 4][:-(num + 1)] + [4]
 
 
 def test_exec_manipulate_stack_raises_error_duplicate_value_in_empty_stack():
@@ -362,7 +361,7 @@ def test_exec_manipulate_stack_raises_error_duplicate_value_in_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n ')
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\n ', [], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(1, 5)])
@@ -370,9 +369,9 @@ def test_exec_manipulate_stack_can_duplicate_the_top_value_on_the_stack(stack):
     """Test that manipulate stack can duplicate the top stack value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n ')
-    i.stack = stack[:]
-    i.exec_manipulate_stack()
-    assert i.stack == stack + stack[-1:]
+    test_stack = stack[:]
+    i.exec_manipulate_stack('\n ', test_stack, [0])
+    assert test_stack == stack + stack[-1:]
 
 
 def test_exec_manipulate_stack_raises_error_swap_values_in_empty_stack():
@@ -380,16 +379,15 @@ def test_exec_manipulate_stack_raises_error_swap_values_in_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\t')
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\n\t', [], [0])
 
 
 def test_exec_manipulate_stack_raises_error_swap_values_in_one_value_stack():
     """Test exec_manipulate_stack raises an IndexError for one value stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\t')
-    i.stack = [0]
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\n\t', [0], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(2, 6)])
@@ -397,10 +395,10 @@ def test_exec_manipulate_stack_can_swap_the_top_values_on_the_stack(stack):
     """Test that manipulate stack can swap the top stack values."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\t')
-    i.stack = stack[:]
-    i.exec_manipulate_stack()
+    test_stack = stack[:]
+    i.exec_manipulate_stack('\n\t', test_stack, [0])
     stack[-1], stack[-2] = stack[-2], stack[-1]
-    assert i.stack == stack
+    assert test_stack == stack
 
 
 def test_exec_manipulate_stack_raises_error_discard_top_value_in_empty_stack():
@@ -408,7 +406,7 @@ def test_exec_manipulate_stack_raises_error_discard_top_value_in_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\n')
     with pytest.raises(IndexError):
-        i.exec_manipulate_stack()
+        i.exec_manipulate_stack('\n\n', [], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(1, 5)])
@@ -416,18 +414,17 @@ def test_exec_manipulate_stack_can_discard_the_top_value_on_the_stack(stack):
     """Test that manipulate stack can discard the top stack value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\n')
-    i.stack = stack[:]
-    i.exec_manipulate_stack()
-    assert i.stack == stack[:-1]
+    test_stack = stack[:]
+    i.exec_manipulate_stack('\n\n', test_stack, [0])
+    assert test_stack == stack[:-1]
 
 
 def test_exec_arithmetic_raises_error_for_invalid_command():
     """Test exec_arithmetic raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
-    i.stack = [1, 2]
     with pytest.raises(SyntaxError):
-        i.exec_arithmetic()
+        i.exec_arithmetic(' ', [1, 2], [0])
 
 
 def test_exec_arithmetic_raises_error_sum_values_from_empty_stack():
@@ -435,16 +432,15 @@ def test_exec_arithmetic_raises_error_sum_values_from_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  ')
     with pytest.raises(IndexError):
-        i.exec_arithmetic()
+        i.exec_arithmetic('  ', [], [0])
 
 
 def test_exec_arithmetic_raises_error_sum_values_from_one_value_stack():
     """Test exec_arithmetic raises an IndexError for one value stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  ')
-    i.stack = [0]
     with pytest.raises(IndexError):
-        i.exec_arithmetic()
+        i.exec_arithmetic('  ', [0], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -452,11 +448,11 @@ def test_exec_arithmetic_pushes_sum_of_top_values_on_the_stack(stack):
     """Test that arithmetic pushes the sum of top two values in stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  ')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic('  ', test_stack, [0])
     sum_stack = stack[:-2]
     sum_stack.append(stack[-2] + stack[-1])
-    assert i.stack == sum_stack
+    assert test_stack == sum_stack
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -464,11 +460,11 @@ def test_exec_arithmetic_pushes_diff_of_top_values_on_the_stack(stack):
     """Test that arithmetic pushes the diff of top two values in stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic(' \t', test_stack, [0])
     diff_stack = stack[:-2]
     diff_stack.append(stack[-2] - stack[-1])
-    assert i.stack == diff_stack
+    assert test_stack == diff_stack
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -476,20 +472,19 @@ def test_exec_arithmetic_pushes_prod_of_top_values_on_the_stack(stack):
     """Test that arithmetic pushes the prod of top two values in stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \n')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic(' \n', test_stack, [0])
     prod_stack = stack[:-2]
     prod_stack.append(stack[-2] * stack[-1])
-    assert i.stack == prod_stack
+    assert test_stack == prod_stack
 
 
 def test_exec_arithmetic_throws_error_for_division_by_zero():
     """Test that if top of stack is zero, division raises ZeroDivisionError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ')
-    i.stack = [1, 0]
     with pytest.raises(ZeroDivisionError):
-        i.exec_arithmetic()
+        i.exec_arithmetic('\t ', [1, 0], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -497,20 +492,19 @@ def test_exec_arithmetic_pushes_quot_of_top_values_on_the_stack(stack):
     """Test that arithmetic pushes the quot of top two values in stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic('\t ', test_stack, [0])
     quot_stack = stack[:-2]
     quot_stack.append(stack[-2] // stack[-1])
-    assert i.stack == quot_stack
+    assert test_stack == quot_stack
 
 
 def test_exec_arithmetic_throws_error_for_modulo_by_zero():
     """Test that if top of stack is zero, modulo raises ZeroDivisionError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
-    i.stack = [1, 0]
     with pytest.raises(ZeroDivisionError):
-        i.exec_arithmetic()
+        i.exec_arithmetic('\t\t', [1, 0], [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -518,11 +512,11 @@ def test_exec_arithmetic_pushes_mod_of_top_values_on_the_stack(stack):
     """Test that arithmetic pushes the mod of top two values in stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic('\t\t', test_stack, [0])
     mod_stack = stack[:-2]
     mod_stack.append(stack[-2] % stack[-1])
-    assert i.stack == mod_stack
+    assert test_stack == mod_stack
 
 
 @pytest.mark.parametrize('stack', [[1, 2], [1, -2], [-1, 2]])
@@ -530,21 +524,20 @@ def test_exec_arithmetic_mod_matches_sign_of_top_stack_value(stack):
     """Test that sign of the mod matches sign of the top number on stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
-    i.stack = stack[:]
-    i.exec_arithmetic()
+    test_stack = stack[:]
+    i.exec_arithmetic('\t\t', test_stack, [0])
     if stack[-1] > 0:
-        assert i.stack[-1] > 0
+        assert test_stack[-1] > 0
     else:
-        assert i.stack[-1] < 0
+        assert test_stack[-1] < 0
 
 
 def test_exec_heap_access_raises_error_for_invalid_command():
     """Test exec_heap_access raises a SyntaxError for an invalid command."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n')
-    i.stack = [1, 2]
     with pytest.raises(SyntaxError):
-        i.exec_heap_access()
+        i.exec_heap_access('\n', [1, 2], {}, [0])
 
 
 def test_exec_heap_access_raises_error_popping_from_empty_stack():
@@ -552,16 +545,15 @@ def test_exec_heap_access_raises_error_popping_from_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
     with pytest.raises(IndexError):
-        i.exec_heap_access()
+        i.exec_heap_access(' ', [], {}, [0])
 
 
 def test_exec_heap_access_raises_error_popping_from_one_item_stack_storing():
     """Test exec_heap_access raises an IndexError for one item stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
-    i.stack = [0]
     with pytest.raises(IndexError):
-        i.exec_heap_access()
+        i.exec_heap_access(' ', [0], {}, [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -569,19 +561,19 @@ def test_exec_heap_access_stores_values_into_heap_from_stack(stack):
     """Test that exec_heap_access can move values from the heap from stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
-    i.stack = stack[:]
-    i.exec_heap_access()
+    test_stack = stack[:]
+    test_heap = {}
+    i.exec_heap_access(' ', test_stack, test_heap, [0])
     b, a = stack[-2:]
-    assert i.heap[b] == a
+    assert test_heap[b] == a
 
 
 def test_exec_heap_access_invalid_heap_address_raises_error():
     """Test that accessing an invalid heap access raises a NameError."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t')
-    i.stack = [0]
     with pytest.raises(NameError):
-        i.exec_heap_access()
+        i.exec_heap_access('\t', [0], {}, [0])
 
 
 @pytest.mark.parametrize('heap', [{x: x**2 for x in range(y)} for y in range(3, 7)])
@@ -591,10 +583,9 @@ def test_exec_heap_access_stores_values_into_stack_from_heap(heap):
     from random import choice
     i = SpaceInterpreter('\t')
     address = choice(list(heap))
-    i.stack = [address]
-    i.heap = heap
-    i.exec_heap_access()
-    assert i.stack[-1] == heap[address]
+    test_stack = [address]
+    i.exec_heap_access('\t', test_stack, heap, [0])
+    assert test_stack[-1] == heap[address]
 
 
 def test_exec_input_output_raises_error_for_invalid_command():
@@ -602,7 +593,7 @@ def test_exec_input_output_raises_error_for_invalid_command():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n')
     with pytest.raises(SyntaxError):
-        i.exec_input_output()
+        i.exec_input_output('\n', '', [], {}, [0])
 
 
 def test_exec_input_output_raises_error_for_output_char_from_empty_stack():
@@ -610,7 +601,7 @@ def test_exec_input_output_raises_error_for_output_char_from_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  ')
     with pytest.raises(IndexError):
-        i.exec_input_output()
+        i.exec_input_output('  ', '', [], {}, [0])
 
 
 @pytest.mark.parametrize('stack', [[x + 33 for x in range(y)] for y in range(1, 94, 5)])
@@ -618,8 +609,8 @@ def test_exec_input_output_can_output_top_of_stack_as_character(stack):
     """Test that exec_inout_output can output top stack number as character."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  ')
-    i.stack = stack[:]
-    output = i.exec_input_output()
+    test_stack = stack[:]
+    _, output, _ = i.exec_input_output('  ', '', test_stack, {}, [0])
     assert output == chr(stack[-1])
 
 
@@ -628,7 +619,7 @@ def test_exec_input_output_raises_error_for_output_num_from_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t')
     with pytest.raises(IndexError):
-        i.exec_input_output()
+        i.exec_input_output(' \t', '', [], {}, [0])
 
 
 @pytest.mark.parametrize('stack', [[x for x in range(y)] for y in range(3, 7)])
@@ -636,8 +627,8 @@ def test_exec_input_output_can_output_top_of_stack_as_number(stack):
     """Test that exec_inout_output can output top stack number."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t')
-    i.stack = stack[:]
-    output = i.exec_input_output()
+    test_stack = stack[:]
+    _, output, _ = i.exec_input_output(' \t', '', test_stack, {}, [0])
     assert output == str(stack[-1])
 
 
@@ -646,7 +637,7 @@ def test_exec_input_output_raises_error_when_reading_char_from_empty_input():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ')
     with pytest.raises(IOError):
-        i.exec_input_output()
+        i.exec_input_output('\t ', '', [], {}, [0])
 
 
 def test_exec_input_output_raises_error_when_reading_char_for_empty_stack():
@@ -654,7 +645,7 @@ def test_exec_input_output_raises_error_when_reading_char_for_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ', 'Hello')
     with pytest.raises(IndexError):
-        i.exec_input_output()
+        i.exec_input_output('\t ', 'Hello', [], {}, [0])
 
 
 @pytest.mark.parametrize('inp', [''.join([chr(x + 33) for x in range(y, 0, -1)])
@@ -663,9 +654,9 @@ def test_exec_input_output_stores_char_from_input_as_ascii_in_heap(inp):
     """Test that the character from input is stored in heap as its ASCII value."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t ', inp)
-    i.stack = [0]
-    i.exec_input_output()
-    assert i.heap[0] == ord(inp[0])
+    heap = {}
+    i.exec_input_output('\t ', inp, [0], heap, [0])
+    assert heap[0] == ord(inp[0])
 
 
 def test_exec_input_output_raises_error_when_reading_num_from_empty_input():
@@ -673,7 +664,7 @@ def test_exec_input_output_raises_error_when_reading_num_from_empty_input():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t')
     with pytest.raises(IOError):
-        i.exec_input_output()
+        i.exec_input_output('\t\t', '', [], {}, [0])
 
 
 def test_exec_input_output_raises_error_when_reading_num_for_empty_stack():
@@ -681,34 +672,31 @@ def test_exec_input_output_raises_error_when_reading_num_for_empty_stack():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t', '1241\n')
     with pytest.raises(IndexError):
-        i.exec_input_output()
+        i.exec_input_output('\t\t', '1241\n', [], {}, [0])
 
 
 def test_exec_input_output_raises_error_when_reading_non_number_as_num():
     """Test that exec_inout_output raises ValueError for reading char as num."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t', 'Hello\n')
-    i.stack = [0]
     with pytest.raises(ValueError):
-        i.exec_input_output()
+        i.exec_input_output('\t\t', 'Hello\n', [0], {}, [0])
 
 
 def test_exec_input_output_raises_error_when_reading_terminal_as_num():
     """Test that exec_inout_output raises ValueError for reading terminal as num."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t', '\n')
-    i.stack = [0]
     with pytest.raises(ValueError):
-        i.exec_input_output()
+        i.exec_input_output('\t\t', '\n', [0], {}, [0])
 
 
 def test_exec_input_output_raises_error_when_reading_num_with_no_terminal():
     """Test exec_inout_output raises SyntaxError for reading num with no terminal."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t', '1234')
-    i.stack = [0]
     with pytest.raises(SyntaxError):
-        i.exec_input_output()
+        i.exec_input_output('\t\t', '1234', [0], {}, [0])
 
 
 @pytest.mark.parametrize('inp', [(''.join([str(x) for x in range(y, 0, -1)]) + '\n')
@@ -717,9 +705,9 @@ def test_exec_input_output_stores_num_from_input_as_int_in_heap(inp):
     """Test that the number from input is stored in heap as int."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t', inp)
-    i.stack = [0]
-    i.exec_input_output()
-    assert i.heap[0] == int(inp)
+    heap = {}
+    i.exec_input_output('\t\t', inp, [0], heap, [0])
+    assert heap[0] == int(inp)
 
 
 def test_exec_flow_control_raises_error_for_invalid_command():
@@ -727,7 +715,7 @@ def test_exec_flow_control_raises_error_for_invalid_command():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' ')
     with pytest.raises(SyntaxError):
-        i.exec_flow_control()
+        i.exec_flow_control(' ', {}, [], [0])
 
 
 def test_exec_flow_control_marking_with_duplicate_label_raises_error():
@@ -736,16 +724,16 @@ def test_exec_flow_control_marking_with_duplicate_label_raises_error():
     i = SpaceInterpreter('  \t\n')
     i.labels = {'\t': 0}
     with pytest.raises(NameError):
-        i.exec_flow_control()
+        i.exec_flow_control('  \t\n', {'\t': 0}, [], [0])
 
 
 def test_exec_flow_control_can_mark_current_location_with_label():
     """Test exec_flow_control marks current position with a label."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  \t\n\t\n  ')
-    assert i.labels == {}
-    i.exec_flow_control()
-    assert i.labels == {'\t': 4}
+    labels = {}
+    i.exec_flow_control('  \t\n\t\n  ', labels, [], [0])
+    assert labels == {'\t': 4}
 
 
 def test_exec_flow_control_calling_subroutine_with_bad_label_raises_error():
@@ -753,28 +741,26 @@ def test_exec_flow_control_calling_subroutine_with_bad_label_raises_error():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t\t\n')
     with pytest.raises(NameError):
-        i.exec_flow_control()
+        i.exec_flow_control(' \t\t\n', {}, [], [0])
 
 
 def test_exec_flow_control_moves_pointer_to_labeled_suroutine():
     """Test exec_flow_control moves pointer to subroutine at the label."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.exec_flow_control()
-    assert i.p == 9
+    p, _ = i.exec_flow_control(' \t\t\n\t\n  ', {'\t': 9}, [], [0])
+    assert p == 9
 
 
 def test_exec_flow_control_adds_level_to_call_stack_keeping_prev_position():
     """Test exec_flow_control adds level to call-stack on top of prev position."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    assert len(i._call_stack) == 1
-    i.exec_flow_control()
-    assert len(i._call_stack) == 2
-    assert i._call_stack[0] == 4
-    assert i._call_stack[1] == 9
+    call_stack = [0]
+    p, _ = i.exec_flow_control(' \t\t\n\t\n  ', {'\t': 9}, [], call_stack)
+    assert len(call_stack) == 2
+    assert call_stack[0] == 4
+    assert p == 9
 
 
 def test_exec_flow_control_jump_unconditionally_with_bad_label_raises_error():
@@ -782,166 +768,147 @@ def test_exec_flow_control_jump_unconditionally_with_bad_label_raises_error():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \n\t\n')
     with pytest.raises(NameError):
-        i.exec_flow_control()
+        i.exec_flow_control(' \n\t\n', {}, [], [0])
 
 
 def test_exec_flow_control_jumps_pointer_unconditionally_to_label():
     """Test exec_flow_control jumps pointer unconditionally to the label."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \n\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.exec_flow_control()
-    assert i.p == 9
+    p, _ = i.exec_flow_control(' \n\t\n\t\n  ', {'\t': 9}, [], [0])
+    assert p == 9
 
 
 def test_exec_flow_control_jumps_current_pointer_unconditionally():
     """Test exec_flow_control does not add to call stack when jumping pointer."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter(' \n\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    assert len(i._call_stack) == 1
-    i.exec_flow_control()
-    assert len(i._call_stack) == 1
+    call_stack = [0]
+    i.exec_flow_control(' \n\t\n\t\n  ', {'\t': 9}, [], call_stack)
+    assert len(call_stack) == 1
 
 
 def test_exec_flow_control_jump_when_zero_with_bad_label_raises_error():
     """Test exec_flow_control raises a NameError for a undefined label."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\n')
-    i.stack = [0]
     with pytest.raises(NameError):
-        i.exec_flow_control()
+        i.exec_flow_control('\t \t\n', {}, [0], [0])
 
 
 def test_exec_flow_control_jump_when_zero_empty_stack_raises_error():
     """Test exec_flow_control jump raises IndexError for an empty stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\n\t\n  ')
-    i.labels = {'\t': 9}
     with pytest.raises(IndexError):
-        i.exec_flow_control()
+        i.exec_flow_control('\t \t\n\t\n  ', {'\t': 9}, [], [0])
 
 
 def test_exec_flow_control_jump_when_zero_moves_pointer_when_popping_zero():
     """Test exec_flow_control jumps pointer to the label when stack top is zero."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [0]
-    i.exec_flow_control()
-    assert i.p == 9
+    p, _ = i.exec_flow_control('\t \t\n\t\n  ', {'\t': 9}, [0], [0])
+    assert p == 9
 
 
 def test_exec_flow_control_jumps_current_pointer_when_zero():
     """Test exec_flow_control does not add to call stack when jumping pointer."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [0]
-    assert len(i._call_stack) == 1
-    i.exec_flow_control()
-    assert len(i._call_stack) == 1
+    call_stack = [0]
+    i.exec_flow_control('\t \t\n\t\n  ', {'\t': 9}, [0], call_stack)
+    assert len(call_stack) == 1
 
 
 def test_exec_flow_control_jump_when_zero_does_not_move_pointer_for_non_zero():
     """Test exec_flow_control does not jump pointer when stack top is not zero."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t \t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [5]
-    i.exec_flow_control()
-    assert i.p == 4
+    p, _ = i.exec_flow_control('\t \t\n\t\n  ', {'\t': 9}, [5], [0])
+    assert p == 4
 
 
 def test_exec_flow_control_jump_when_neg_with_bad_label_raises_error():
     """Test exec_flow_control raises a NameError for a undefined label."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n')
-    i.stack = [-5]
     with pytest.raises(NameError):
-        i.exec_flow_control()
+        i.exec_flow_control('\t\t\t\n', {}, [-5], [0])
 
 
 def test_exec_flow_control_jump_when_neg_empty_stack_raises_error():
     """Test exec_flow_control jump raises IndexError for an empty stack."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n\t\n  ')
-    i.labels = {'\t': 9}
     with pytest.raises(IndexError):
-        i.exec_flow_control()
+        i.exec_flow_control('\t\t\t\n\t\n  ', {'\t': 9}, [], [0])
 
 
 def test_exec_flow_control_jump_when_neg_moves_pointer_when_popping_neg():
     """Test exec_flow_control jumps pointer to the label when stack top is neg."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [-5]
-    i.exec_flow_control()
-    assert i.p == 9
+    p, _ = i.exec_flow_control('\t\t\t\n\t\n  ', {'\t': 9}, [-5], [0])
+    assert p == 9
 
 
 def test_exec_flow_control_jumps_current_pointer_when_neg():
     """Test exec_flow_control does not add to call stack when jumping pointer."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [-5]
-    assert len(i._call_stack) == 1
-    i.exec_flow_control()
-    assert len(i._call_stack) == 1
+    call_stack = [0]
+    i.exec_flow_control('\t\t\t\n\t\n  ', {'\t': 9}, [-5], call_stack)
+    assert len(call_stack) == 1
 
 
 def test_exec_flow_control_jump_when_neg_does_not_move_pointer_for_pos_num():
     """Test exec_flow_control does not jump pointer when stack top is pos."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [5]
-    i.exec_flow_control()
-    assert i.p == 4
+    p, _ = i.exec_flow_control('\t\t\t\n\t\n  ', {'\t': 9}, [5], [0])
+    assert p == 4
 
 
 def test_exec_flow_control_jump_when_neg_does_not_move_pointer_for_zero():
     """Test exec_flow_control does not jump pointer when stack top is zero."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\t\t\n\t\n  ')
-    i.labels = {'\t': 9}
-    i.stack = [0]
-    i.exec_flow_control()
-    assert i.p == 4
+    p, _ = i.exec_flow_control('\t\t\t\n\t\n  ', {'\t': 9}, [0], [0])
+    assert p == 4
 
 
 def test_exec_flow_control_exit_command_from_subroutine_returns_to_call_position():
     """Test exec_flow_control sub exit returns control to where it was called."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n')
-    i._call_stack = [8, 0]
-    i.exec_flow_control()
-    assert i.p == 8
-    assert len(i._call_stack) == 1
+    call_stack = [8, 0]
+    i.exec_flow_control('\t\n', {}, [], call_stack)
+    assert call_stack[-1] == 8
+    assert len(call_stack) == 1
 
 
 def test_exec_flow_control_exit_command_from_subroutine_does_not_exit_program():
     """Test exec_flow_control subroutine exit does not exit program."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n')
-    i._call_stack = [0]
-    assert i.exec_flow_control() is not True
+    _, exit = i.exec_flow_control('\t\n', {}, [], [0])
+    assert exit is False
 
 
 def test_exec_flow_control_exit_command_from_subroutine_does_nothing_not_in_sub():
     """Test exec_flow_control sub exit does nothing if not in subroutine."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n')
-    i._call_stack = [0]
-    i.exec_flow_control()
-    assert i.p == 2
-    assert len(i._call_stack) == 1
+    call_stack = [0]
+    i.exec_flow_control('\t\n', {}, [], call_stack)
+    assert call_stack[-1] == 2
+    assert len(call_stack) == 1
 
 
 def test_exec_flow_control_exit_command_ends_program():
     """Test that execute_flow_control can end the program."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\n\n')
-    assert i.exec_flow_control() is True
+    _, exit = i.exec_flow_control('\n\n', {}, [], [0])
+    assert exit is True

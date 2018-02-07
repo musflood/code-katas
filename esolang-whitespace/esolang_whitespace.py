@@ -28,6 +28,13 @@ class SpaceInterpreter(object):
         self._call_stack = [0]
 
         # All commands #
+        self._IMPS = {
+            ' ': self.exec_manipulate_stack,
+            '\t ': self.exec_arithmetic,
+            '\t\t': self.exec_heap_access,
+            '\t\n': self.exec_input_output,
+            '\n': self.exec_flow_control
+        }
 
         self._STACK_IMP = {
             ' ': self._push,
@@ -104,29 +111,28 @@ class SpaceInterpreter(object):
         while self.p < len(self.code):
             print(self)
 
-            imp = self.code[self.p:self.p + 2]
+            imp_string = self.code[self.p:self.p + 2]
             self.p += 2
 
-            if imp[0] == ' ':
+            if imp_string not in self._IMPS:
+                imp_string = imp_string[0]
                 self.p -= 1
-                self.exec_manipulate_stack()
 
-            elif imp == '\t ':
-                self.exec_arithmetic()
+            try:
+                imp = self._IMPS[imp_string]
 
-            elif imp == '\t\t':
-                self.exec_heap_access()
-
-            elif imp == '\t\n':
-                output += self.exec_input_output()
-
-            elif imp[0] == '\n':
-                self.p -= 1
-                if self.exec_flow_control():
-                    break
-
-            else:
+            except KeyError:
                 raise SyntaxError('Invalid instruction modification parameter.')
+
+            result = imp()
+            self.p = result[0]
+            if len(result) > 2:
+                _, out, self.input = result
+                output += out
+            exit = result[1] if len(result) == 2 else False
+
+            if exit:
+                break
 
         else:
             raise SyntaxError('Code must terminate with an exit command.')
@@ -137,7 +143,7 @@ class SpaceInterpreter(object):
         """Run through the code to define all the labels used."""
         pass
 
-    def exec_manipulate_stack(self):
+    def exec_manipulate_stack(self, code=None, stack=None, call_stack=None, **kwargs):
         """Execute commands for the Stack Manipulation IMP.
 
         Commands:
@@ -149,35 +155,40 @@ class SpaceInterpreter(object):
             nt - Swap top two values on stack
             nn - Discard top value on stack
         """
-        cmd_string = self.code[self.p:self.p + 2]
-        self.p += 2
+        code = self.code[self.p:] if code is None else code
+        stack = self.stack if stack is None else stack
+        call_stack = self._call_stack if call_stack is None else call_stack
+
+        cmd_string = code[:2]
+        delta = 2
 
         if cmd_string not in self._STACK_IMP:
-            self.p -= 1
+            delta -= 1
             cmd_string = cmd_string[0]
 
         try:
             command = self._STACK_IMP[cmd_string]
-            delta = command(self.stack, self.code[self.p:])
-            self.p += delta
+            delta += command(code=code[delta:], stack=stack)
 
         except KeyError:
             raise SyntaxError('Invalid stack manipulation command.')
 
-    def _push(self, stack, code):
+        return call_stack[-1] + delta,
+
+    def _push(self, code, stack):
         """Push a number onto the memory stack."""
         num, delta = self.parse_num(code)
         stack.append(num)
         return delta
 
-    def _duplicate_top_value(self, stack, *args):
+    def _duplicate_top_value(self, stack, **kwargs):
         """Push a duplicate of the top value onto the stack."""
         if not stack:
             raise IndexError('Cannot duplicate from empty stack.')
         stack.append(stack[-1])
         return 0
 
-    def _duplicate_nth_value(self, stack, code):
+    def _duplicate_nth_value(self, code, stack):
         """Push a duplicate of the nth value onto the stack."""
         if not stack:
             raise IndexError('Cannot duplicate from empty stack.')
@@ -190,7 +201,7 @@ class SpaceInterpreter(object):
         stack.append(stack[-(n + 1)])
         return delta
 
-    def _discard_top_value(self, stack, *args):
+    def _discard_top_value(self, stack, **kwargs):
         """Discard the top value from the stack."""
         if not stack:
             raise IndexError('Cannot discard from empty stack.')
@@ -198,7 +209,7 @@ class SpaceInterpreter(object):
         stack.pop()
         return 0
 
-    def _discard_below_top_value(self, stack, code):
+    def _discard_below_top_value(self, code, stack):
         """Discard top num values below top of stack.
 
         num < 0 and num >= len(stack) discards all but top.
@@ -212,14 +223,14 @@ class SpaceInterpreter(object):
 
         return delta
 
-    def _swap_top_two_values(self, stack, *args):
+    def _swap_top_two_values(self, stack, **kwargs):
         """Swap the top two values on the stack."""
         if not stack or len(stack) == 1:
             raise IndexError('Not enough values in stack to swap.')
         stack[-1], stack[-2] = stack[-2], stack[-1]
         return 0
 
-    def exec_arithmetic(self):
+    def exec_arithmetic(self, code=None, stack=None, call_stack=None, **kwargs):
         """Execute commands for the Arithmetic IMP.
 
         Commands:
@@ -229,15 +240,18 @@ class SpaceInterpreter(object):
             ts - Pop a and b, then push b//a - Raises ZeroDivisionError
             tt - Pop a and b, then push b%a - Raises ZeroDivisionError
         """
-        cmd_string = self.code[self.p:self.p + 2]
-        self.p += 2
+        code = self.code[self.p:] if code is None else code
+        stack = self.stack if stack is None else stack
+        call_stack = self._call_stack if call_stack is None else call_stack
 
         try:
-            op = self._ARITH_IMP[cmd_string]
-            self._stack_artithmetic(op, self.stack)
+            op = self._ARITH_IMP[code[:2]]
+            self._stack_artithmetic(op, stack)
 
         except KeyError:
             raise SyntaxError('Invalid arithmetic command.')
+
+        return call_stack[-1] + 2,
 
     def _stack_artithmetic(self, op, stack):
         """Execute operation on the top two values of the stack."""
@@ -245,29 +259,32 @@ class SpaceInterpreter(object):
             a, b = stack.pop(), stack.pop()
             result = eval('b{op}a'.format(op=op))
             stack.append(result)
-            return stack
 
         except IndexError:
             raise IndexError('Not enough values in stack for operation.')
         except ZeroDivisionError:
             raise ZeroDivisionError('Cannot divide by zero.')
 
-    def exec_heap_access(self):
+    def exec_heap_access(self, code=None, stack=None, heap=None, call_stack=None, **kwargs):
         """Execute commands for the Heap Access IMP.
 
         Commands:
             s - Pop a and b, then store a at heap address b
             t - Pop a, then push the value at heap address a onto stack
         """
-        cmd_string = self.code[self.p:self.p + 1]
-        self.p += 1
+        code = self.code[self.p:] if code is None else code
+        stack = self.stack if stack is None else stack
+        heap = self.heap if heap is None else heap
+        call_stack = self._call_stack if call_stack is None else call_stack
 
         try:
-            command = self._HEAP_IMP[cmd_string]
-            command(self.stack, self.heap)
+            command = self._HEAP_IMP[code[0]]
+            command(stack, heap)
 
         except KeyError:
             raise SyntaxError('Invalid heap access command.')
+
+        return call_stack[-1] + 1,
 
     def _stack_to_heap(self, stack, heap):
         """Move a value from the stack to the heap.
@@ -295,7 +312,8 @@ class SpaceInterpreter(object):
         except KeyError:
             raise NameError('Invalid heap address.')
 
-    def exec_input_output(self):
+    def exec_input_output(self, code=None, inp=None, stack=None, heap=None,
+                          call_stack=None, **kwargs):
         """Execute commands for the Input/Output IMP.
 
         Commands:
@@ -308,26 +326,29 @@ class SpaceInterpreter(object):
 
         Return: Output string
         """
-        cmd_string = self.code[self.p:self.p + 2]
-        self.p += 2
+        code = self.code[self.p:] if code is None else code
+        inp = self.input if inp is None else inp
+        stack = self.stack if stack is None else stack
+        heap = self.heap if heap is None else heap
+        call_stack = self._call_stack if call_stack is None else call_stack
 
         try:
-            command = self._IO_IMP[cmd_string]
-            output, self.input = command(self.input, self.stack, self.heap)
+            command = self._IO_IMP[code[:2]]
+            output, inp = command(inp=inp, stack=stack, heap=heap)
 
         except KeyError:
             raise SyntaxError('Invalid input/output command.')
 
-        return output
+        return call_stack[-1] + 2, output, inp
 
-    def _output_character(self, inp, stack, *args):
+    def _output_character(self, inp, stack, **kwargs):
         """Output the top value on the stack as a character."""
         try:
             return chr(stack.pop()), inp
         except IndexError:
             raise IndexError('No values in stack to output.')
 
-    def _output_number(self, inp, stack, *args):
+    def _output_number(self, inp, stack, **kwargs):
         """Output the top value on the stack as a number."""
         try:
             return str(stack.pop()), inp
@@ -378,7 +399,8 @@ class SpaceInterpreter(object):
         except ValueError:
             raise ValueError('Cannot parse input as a number.')
 
-    def exec_flow_control(self):
+    def exec_flow_control(self, code=None, labels=None, stack=None,
+                          call_stack=None, **kwargs):
         """Execute commands for the Flow Control IMP.
 
         Commands:
@@ -392,19 +414,21 @@ class SpaceInterpreter(object):
 
         Return: True - exit the program, False - continue
         """
-        cmd_string = self.code[self.p:self.p + 2]
-        self.p += 2
+        code = self.code[self.p:] if code is None else code
+        labels = self.labels if labels is None else labels
+        stack = self.stack if stack is None else stack
+        call_stack = self._call_stack if call_stack is None else call_stack
 
         try:
-            command = self._FLOW_IMP[cmd_string]
-            position, exit = command(code=self.code[self.p:], labels=self.labels,
-                                     call_stack=self._call_stack, stack=self.stack)
+            call_stack[-1] += 2
+            command = self._FLOW_IMP[code[:2]]
+            position, exit = command(code=code[2:], labels=labels,
+                                     call_stack=call_stack, stack=stack)
 
         except KeyError:
             raise SyntaxError('Invalid flow control command.')
 
-        self.p = position
-        return exit
+        return position, exit
 
     def _label_position(self, code, labels, call_stack, **kwargs):
         """Mark the current position with a unique label."""
@@ -435,14 +459,14 @@ class SpaceInterpreter(object):
         label, _ = self.parse_label(code)
         return self._get_label_position(label, labels), False
 
-    def _jump_zero_conditional(self, code, labels, call_stack, stack, **kwargs):
+    def _jump_zero_conditional(self, code, labels, call_stack, stack):
         """Jump the pointer to the labeled position if top of stack is zero."""
         label, delta = self.parse_label(code)
         if stack.pop() == 0:
             return self._get_label_position(label, labels), False
         return call_stack[-1] + delta, False
 
-    def _jump_neg_conditional(self, code, labels, call_stack, stack, **kwargs):
+    def _jump_neg_conditional(self, code, labels, call_stack, stack):
         """Jump the pointer to the labeled position if top of stack is negative."""
         label, delta = self.parse_label(code)
         if stack.pop() < 0:
