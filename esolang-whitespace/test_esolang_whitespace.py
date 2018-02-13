@@ -67,6 +67,210 @@ def test_output_of_letters_with_whitespace(code, output):
     assert whitespace(code) == output
 
 
+CODES = [
+    ("blahhhh   \targgggghhh     \t\n\t\n  \n\n\n", "A"),
+    (" I heart \t  cats  \t \n\t\n  \n\n\n", "B"),
+    ("   \t  welcome  \t\t\n\t\n to the\nnew\nworld\n", "C")
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_output_of_letters_with_commented_whitespace(code, output):
+    """Test that outputing letters works with inline comments."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ("   \t\t\n   \t\t\n\t\n \t\t\n \t\n\n\n", "33"),
+    ("   \t\t\n \n \t\n \t\t\n \t\n\n\n", "33"),
+    ("   \t\n   \t \n   \t\t\n \t  \t \n\t\n \t\n\n\n", "1"),
+    ("   \t\n   \t \n   \t\t\n \t  \t\n\t\n \t\n\n\n", "2"),
+    ("   \t\n   \t \n   \t\t\n \t   \n\t\n \t\n\n\n", "3"),
+    ('   \t\t\n   \t \n \n\t\t\n \t\t\n \t\n\n\n', '32'),
+    ('   \t\t\n   \t \n \n\t \n\n\t\n \t\n\n\n', '2'),
+    ('   \t\t\n   \t \n   \t\n   \t  \n   \t\t \n   \t \t\n   \t\t\t\n \n\t \t\n \t\t\n\t\n \t\t\n \t\t\n \t\t\n \t\n\n\n', '5123')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_stack_functionality(code, output):
+    """Test that stack functionality works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('  \t\n\t\n \t\n\n\n', '0'),
+    ('   \t\n   \t \n   \t\t\n \t\n\t\t     \n\t\n \t\n\n\n', '3'),
+    ('   \t\n   \t \n   \t\t\n \t\n\t \t  \n\t\n \t\n\n\n', '3')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_stack_edge_cases(code, output):
+    """Test that stack edge cases work properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    (' \n \n\n\n', IndexError),
+    (' \n\n\n\n\n', IndexError),
+    ('   \t\n   \t \n   \t\t\n \t  \t\t\n\t\n \t\n\n\n', IndexError),
+    ('   \t\n   \t \n   \t\t\n \t \t\t\n\t\n \t\n\n\n', IndexError),
+    ('   \t\n   \t \n   \t\t\n \t \n\t\n \t\n\n\n', SyntaxError),
+    ('   \t\n   \t \n   \t\t\n \t\n\t\t     \n\t\n \t\t\n \t\n\n\n', IndexError),
+    ('   \t\n   \t \n   \t\t\n \t\n\t \t  \n\t\n \t\t\n \t\n\n\n', IndexError)
+]
+
+
+@pytest.mark.parametrize('code, error', CODES)
+def test_stack_edge_cases_raise_errors(code, error):
+    """Test that stack edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code)
+
+
+CODES = [
+    ('   \t\n   \t\n   \t \n\t\t \t\t\t\t\n \t\n\n\n', '2'),
+    ('   \t\n   \t\n   \t  \n   \t\n   \t \n\t\t \t\t \t\t\t\t\n \t\n\n\n', '4'),
+    ('   \t\n   \t \n   \t\n   \t  \n   \t \n   \t \n\t\t \t\t \t\t\t \n\t\t\t\t\t\n \t\t\n \t\n\n\n', '42')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_heap_functionality(code, output):
+    """Test that heap works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('   \t\n\t\t\t\t\n \t\n\n\n', NameError),
+    ('   \t\n   \t \n\t\t \t\t\t\n\n\n', IndexError),
+    ('   \t\n\t\t \n\n\n', IndexError)
+]
+
+
+@pytest.mark.parametrize('code, error', CODES)
+def test_heap_edge_cases_raise_errors(code, error):
+    """Test that heap edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code)
+
+
+CODES = [
+    ('  \t\t\n   \t  \n\t   \t\n \t\n\n\n', '3'),
+    ('  \t\t \n   \t  \n\t  \t\t\n \t\n\n\n', '-6'),
+    ('   \t  \n   \t  \n\t  \n\t\n \t\n\n\n', '16'),
+    ('   \t   \n   \t \n\t \t \t\n \t\n\n\n', '4'),
+    ('   \t   \n   \t\t\n\t \t\t\t\n \t\n\n\n', '2'),
+
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_arithmetic_functionality(code, output):
+    """Test that arithmetic works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('   \t   \n   \t\t\n\t \t \t\n \t\n\n\n', '2'),
+    ('  \t\t   \n   \t\t\n\t \t \t\n \t\n\n\n', '-3'),
+    ('   \t \t\n  \t\t \n\t \t\t\t\n \t\n\n\n', '-1'),
+    ('   \t \t\n  \t\t\t\n\t \t\t\t\n \t\n\n\n', '-1'),
+    ('  \t\t \t\n   \t \n\t \t\t\t\n \t\n\n\n', '1'),
+    ('  \t\t \t\n   \t\t\n\t \t\t\t\n \t\n\n\n', '1'),
+    ('  \t\t \t\n  \t\t \n\t \t\t\t\n \t\n\n\n', '-1'),
+    ('  \t\t \t\n  \t\t\t\n\t \t\t\t\n \t\n\n\n', '-2')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_arithmetic_edge_cases(code, output):
+    """Test that arithmetic edge cases work properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('\t   \t\n \t\n\n\n', IndexError),
+    ('   \t  \n\t   \t\n \t\n\n\n', IndexError),
+    ('\t  \t\t\n \t\n\n\n', IndexError),
+    ('   \t  \n\t  \t\t\n \t\n\n\n', IndexError),
+    ('\t  \n\t\n \t\n\n\n', IndexError),
+    ('   \t  \n\t  \n\t\n \t\n\n\n', IndexError),
+    ('\t \t \t\n \t\n\n\n', IndexError),
+    ('   \t \n\t \t \t\n \t\n\n\n', IndexError),
+    ('\t \t\t\t\n \t\n\n\n', IndexError),
+    ('   \t\t\n\t \t\t\t\n \t\n\n\n', IndexError),
+    ('   \t   \n    \n\t \t \t\n \t\n\n\n', ZeroDivisionError),
+    ('   \t   \n    \n\t \t\t\t\n \t\n\n\n', ZeroDivisionError)
+]
+
+
+@pytest.mark.parametrize('code, error', CODES)
+def test_arithmetic_edge_cases_raise_errors(code, error):
+    """Test that arithmetic edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code)
+
+
+CODES = [
+    ('   \t\n\t\n\t\t   \t \n\t\n\t\t   \t\t\n\t\n\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n \t\t\n \t\t\n \t\n\n\n', '1\n2\n3\n', '123'),
+    ('   \t\n\t\n\t\t   \t \n\t\n\t\t   \t\t\n\t\n\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n \t\t\n \t\t\n \t\n\n\n', '8\n6\n7\n', '867'),
+    ('   \t\n\t\n\t\t   \t \n\t\n\t\t   \t\t\n\t\n\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n \t\t\n \t\t\n \t\n\n\n', '9\n1\n8\n2\n7\n3\n5\n4\n', '918'),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', '12345', '12345'),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', '86755', '86755'),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', '91827354', '91827'),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', 'Hello', 'Hello'),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', 'World', 'World')
+]
+
+
+@pytest.mark.parametrize('code, inp, output', CODES)
+def test_input_functionality(code, inp, output):
+    """Test that input works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code, inp) == output
+
+
+CODES = [
+    ('   \t\n\t\n\t\t   \t \n\t\n\t\t   \t\t\n\t\n\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n \t\t\n \t\t\n \t\n\n\n', '1\n2\n', OSError),
+    ('   \t\n\t\n\t    \t \n\t\n\t    \t\t\n\t\n\t    \t  \n\t\n\t    \t \t\n\t\n\t    \t \t\n\t\t\t   \t  \n\t\t\t   \t\t\n\t\t\t   \t \n\t\t\t   \t\n\t\t\t\t\n  \t\n  \t\n  \t\n  \t\n  \n\n\n', 'Hell', OSError),
+    ('\t\n\t\t\n\n\n', '1\n2\n', IndexError),
+    ('\t\n\t \n\n\n', '12', IndexError)
+]
+
+
+@pytest.mark.parametrize('code, inp, error', CODES)
+def test_input_edge_cases_raise_errors(code, inp, error):
+    """Test that input edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code, inp)
+
+
+CODES = [
+    ('   \t\n   \t\t\n   \n   \t \n   \n   \t\n\n  \n\t\n \t\n\t \n\n\n\n', '123'),
+    ('  \t\t\t\n\n  \n \n   \t\t\n\t  \n\t\n \t   \t\n\t    \n \n\t\t\n\n\n\n', '321'),
+    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\t\n \t\t\n \t\n  \n\n\n\n', '')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_unconditional_jump_functionality(code, output):
+    """Test that unconditional jump works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
 # Tests for the Interpreter Class
 
 
@@ -723,7 +927,7 @@ def test_exec_flow_control_marking_with_duplicate_label_raises_error():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  \t\n')
     i.labels = {'\t': 0}
-    with pytest.raises(NameError):
+    with pytest.raises(SyntaxError):
         i.exec_flow_control('  \t\n', {'\t': 0}, [], [0])
 
 

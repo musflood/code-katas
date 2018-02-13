@@ -143,7 +143,7 @@ class SpaceInterpreter(object):
         """Run through the code to define all the labels used."""
         pass
 
-    def exec_manipulate_stack(self, code=None, stack=None, call_stack=None, **kwargs):
+    def exec_manipulate_stack(self, code=None, stack=None, call_stack=None):
         """Execute commands for the Stack Manipulation IMP.
 
         Commands:
@@ -230,7 +230,7 @@ class SpaceInterpreter(object):
         stack[-1], stack[-2] = stack[-2], stack[-1]
         return 0
 
-    def exec_arithmetic(self, code=None, stack=None, call_stack=None, **kwargs):
+    def exec_arithmetic(self, code=None, stack=None, call_stack=None):
         """Execute commands for the Arithmetic IMP.
 
         Commands:
@@ -265,7 +265,7 @@ class SpaceInterpreter(object):
         except ZeroDivisionError:
             raise ZeroDivisionError('Cannot divide by zero.')
 
-    def exec_heap_access(self, code=None, stack=None, heap=None, call_stack=None, **kwargs):
+    def exec_heap_access(self, code=None, stack=None, heap=None, call_stack=None):
         """Execute commands for the Heap Access IMP.
 
         Commands:
@@ -312,8 +312,8 @@ class SpaceInterpreter(object):
         except KeyError:
             raise NameError('Invalid heap address.')
 
-    def exec_input_output(self, code=None, inp=None, stack=None, heap=None,
-                          call_stack=None, **kwargs):
+    def exec_input_output(self, code=None, inp=None, stack=None,
+                          heap=None, call_stack=None):
         """Execute commands for the Input/Output IMP.
 
         Commands:
@@ -400,7 +400,7 @@ class SpaceInterpreter(object):
             raise ValueError('Cannot parse input as a number.')
 
     def exec_flow_control(self, code=None, labels=None, stack=None,
-                          call_stack=None, **kwargs):
+                          call_stack=None, parsing=False):
         """Execute commands for the Flow Control IMP.
 
         Commands:
@@ -423,7 +423,8 @@ class SpaceInterpreter(object):
             call_stack[-1] += 2
             command = self._FLOW_IMP[code[:2]]
             position, exit = command(code=code[2:], labels=labels,
-                                     call_stack=call_stack, stack=stack)
+                                     call_stack=call_stack, stack=stack,
+                                     parsing=parsing)
 
         except KeyError:
             raise SyntaxError('Invalid flow control command.')
@@ -434,7 +435,7 @@ class SpaceInterpreter(object):
         """Mark the current position with a unique label."""
         label, delta = self.parse_label(code)
         if label in labels:
-            raise NameError('Cannot redefine a label.')
+            raise SyntaxError('Cannot redeclare a label.')
 
         position = call_stack[-1] + delta
         labels[label] = position
@@ -454,21 +455,32 @@ class SpaceInterpreter(object):
         call_stack.append(0)
         return self._get_label_position(label, labels), False
 
-    def _jump_unconditionally(self, code, labels, **kwargs):
+    def _jump_unconditionally(self, code, labels, call_stack, parsing, **kwargs):
         """Jump the pointer unconditionally to the labeled position."""
-        label, _ = self.parse_label(code)
+        label, delta = self.parse_label(code)
+        if parsing:
+            return call_stack[-1] + delta, False
+
         return self._get_label_position(label, labels), False
 
-    def _jump_zero_conditional(self, code, labels, call_stack, stack):
+    def _jump_zero_conditional(self, code, labels, call_stack, stack, parsing):
         """Jump the pointer to the labeled position if top of stack is zero."""
         label, delta = self.parse_label(code)
+        if parsing:
+            stack.pop()
+            return call_stack[-1] + delta, False
+
         if stack.pop() == 0:
             return self._get_label_position(label, labels), False
         return call_stack[-1] + delta, False
 
-    def _jump_neg_conditional(self, code, labels, call_stack, stack):
+    def _jump_neg_conditional(self, code, labels, call_stack, stack, parsing):
         """Jump the pointer to the labeled position if top of stack is negative."""
         label, delta = self.parse_label(code)
+        if parsing:
+            stack.pop()
+            return call_stack[-1] + delta, False
+
         if stack.pop() < 0:
             return self._get_label_position(label, labels), False
         return call_stack[-1] + delta, False
