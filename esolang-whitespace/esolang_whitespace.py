@@ -107,6 +107,7 @@ class SpaceInterpreter(object):
         Raises ValueError for unclean termination.
         """
         output = ''
+        self.find_labels()
 
         while self.p < len(self.code):
             print(self)
@@ -141,9 +142,27 @@ class SpaceInterpreter(object):
 
     def find_labels(self):
         """Run through the code to define all the labels used."""
-        pass
+        pointer = 0
 
-    def exec_manipulate_stack(self, code=None, stack=None, call_stack=None):
+        while pointer < len(self.code):
+            imp_string = self.code[pointer:pointer + 2]
+            pointer += 2
+
+            if imp_string not in self._IMPS:
+                imp_string = imp_string[0]
+                pointer -= 1
+
+            try:
+                imp = self._IMPS[imp_string]
+
+            except KeyError:
+                raise SyntaxError('Invalid instruction modification parameter.')
+
+            result = imp(code=self.code[pointer:], stack=[1, 1, 1],
+                         heap={1: 1}, call_stack=[pointer], parsing=True)
+            pointer = result[0]
+
+    def exec_manipulate_stack(self, code=None, stack=None, call_stack=None, **kwargs):
         """Execute commands for the Stack Manipulation IMP.
 
         Commands:
@@ -230,7 +249,7 @@ class SpaceInterpreter(object):
         stack[-1], stack[-2] = stack[-2], stack[-1]
         return 0
 
-    def exec_arithmetic(self, code=None, stack=None, call_stack=None):
+    def exec_arithmetic(self, code=None, stack=None, call_stack=None, **kwargs):
         """Execute commands for the Arithmetic IMP.
 
         Commands:
@@ -265,7 +284,7 @@ class SpaceInterpreter(object):
         except ZeroDivisionError:
             raise ZeroDivisionError('Cannot divide by zero.')
 
-    def exec_heap_access(self, code=None, stack=None, heap=None, call_stack=None):
+    def exec_heap_access(self, code=None, stack=None, heap=None, call_stack=None, **kwargs):
         """Execute commands for the Heap Access IMP.
 
         Commands:
@@ -313,7 +332,7 @@ class SpaceInterpreter(object):
             raise NameError('Invalid heap address.')
 
     def exec_input_output(self, code=None, inp=None, stack=None,
-                          heap=None, call_stack=None):
+                          heap=None, call_stack=None, **kwargs):
         """Execute commands for the Input/Output IMP.
 
         Commands:
@@ -400,7 +419,7 @@ class SpaceInterpreter(object):
             raise ValueError('Cannot parse input as a number.')
 
     def exec_flow_control(self, code=None, labels=None, stack=None,
-                          call_stack=None, parsing=False):
+                          call_stack=None, parsing=False, **kwargs):
         """Execute commands for the Flow Control IMP.
 
         Commands:
@@ -431,13 +450,17 @@ class SpaceInterpreter(object):
 
         return position, exit
 
-    def _label_position(self, code, labels, call_stack, **kwargs):
+    def _label_position(self, code, labels, call_stack, parsing, **kwargs):
         """Mark the current position with a unique label."""
         label, delta = self.parse_label(code)
+        position = call_stack[-1] + delta
+
+        if not parsing:
+            return position, False
+
         if label in labels:
             raise SyntaxError('Cannot redeclare a label.')
 
-        position = call_stack[-1] + delta
         labels[label] = position
         return position, False
 
@@ -448,9 +471,12 @@ class SpaceInterpreter(object):
         except KeyError:
             raise NameError('Label is not defined.')
 
-    def _call_subroutine(self, code, labels, call_stack, **kwargs):
+    def _call_subroutine(self, code, labels, call_stack, parsing, **kwargs):
         """Call the subroutine marked with the next label."""
         label, delta = self.parse_label(code)
+        if parsing:
+            return call_stack[-1] + delta, False
+
         call_stack[-1] += delta
         call_stack.append(0)
         return self._get_label_position(label, labels), False
@@ -485,10 +511,15 @@ class SpaceInterpreter(object):
             return self._get_label_position(label, labels), False
         return call_stack[-1] + delta, False
 
-    def _exit_subroutine(self, call_stack, **kwargs):
+    def _exit_subroutine(self, call_stack, parsing, **kwargs):
         """Exit the current subroutine and return to where it was called."""
+        if parsing:
+            return call_stack[-1], False
+
         if len(call_stack) > 1:
             call_stack.pop()
+        else:
+            raise SyntaxError('Cannot exit subroutine outside of subroutine.')
         return call_stack[-1], False
 
     def _exit_program(self, call_stack, **kwargs):

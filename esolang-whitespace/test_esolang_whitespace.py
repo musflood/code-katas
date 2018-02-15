@@ -15,6 +15,7 @@ def num_to_space(num):
 
 
 FILL_STACK = '   \n   \t\n   \t \n   \t\t\n   \t  \n'
+
 TERMINATE = '\n\n\n'
 
 
@@ -260,16 +261,98 @@ def test_input_edge_cases_raise_errors(code, inp, error):
 CODES = [
     ('   \t\n   \t\t\n   \n   \t \n   \n   \t\n\n  \n\t\n \t\n\t \n\n\n\n', '123'),
     ('  \t\t\t\n\n  \n \n   \t\t\n\t  \n\t\n \t   \t\n\t    \n \n\t\t\n\n\n\n', '321'),
-    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\t\n \t\t\n \t\n  \n\n\n\n', '')
+    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\t\n \t\t\n \t\n  \n\n\n\n', '3'),
+    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\n  \t\n\t\n \t\t\n \t\n\n\n\n  \n\n \n\t\n', '321'),
+    ('   \n   \t\n   \t \n   \t\t\n\n  \n\t\n \t \n \n\t  \n\n \n\n\n   \n\n\n\n', '321'),
+    ('  \t\t\n   \n   \t\n   \t \n   \t\t\n\n  \n\t\n \t \n \n\t\t \n\n \n\n\n   \n\n\n\n', '3210')
 ]
 
 
 @pytest.mark.parametrize('code, output', CODES)
-def test_unconditional_jump_functionality(code, output):
-    """Test that unconditional jump works properly."""
+def test_conditional_unconditional_jump_functionality(code, output):
+    """Test that conditional and unconditional jump works properly."""
     from esolang_whitespace import whitespace
     assert whitespace(code) == output
 
+
+CODES = [
+    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\t\n \t\t\n \t   \t\n   \t \n\n  \n\n\n\n', '3')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_conditional_unconditional_jump_edge_cases(code, output):
+    """Test conditional and unconditional jump edge cases work properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('   \t\n\t\n \t\n\t  \n   \t\n\n   \n\n\n\n', IndexError),
+    ('   \t\n\t\n \t\n\t\t \n   \t\n\n   \n\n\n\n', IndexError),
+    ('   \n   \t\n\t\n \t\n\t  \n   \t\n\t\n \t\n\n\n', NameError),
+    ('  \t\t\n   \t\n\t\n \t\n\t\t \n   \t\n\t\n \t\n\n\n', NameError),
+    ('   \t\n\t\n \t\n \n \n   \t\n\t\n \t\n\n\n', NameError),
+    ('   \t\n   \t \n   \t\t\n\t\n \t\n \n\n\t\n \t\t\n \t\n  \n\n  \n\n\n\n', SyntaxError)
+]
+
+
+@pytest.mark.parametrize('code, error', CODES)
+def test_conditional_unconditional_jump_edge_cases_raise_errors(code, error):
+    """Test conditional and unconditional jump edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code)
+
+
+CODES = [
+    ('\n   \n   \t\n\t\n \t\n\n\n\n\t\n\n\n\n', '1'),
+    ('   \t \n\n \t \n   \t\t\n\n \t \n   \t\n\n \t \n\n\n\n\n   \n\t\n \t\n\n\n', '2'),
+    ('   \t\n\n \t \n   \t \n\n \t \n   \t\t\n\n \t \n\n\n\n\n   \n\t\n \t\n\t\n', '123')
+]
+
+
+@pytest.mark.parametrize('code, output', CODES)
+def test_subroutine_functionality(code, output):
+    """Test that subroutine works properly."""
+    from esolang_whitespace import whitespace
+    assert whitespace(code) == output
+
+
+CODES = [
+    ('   \t\n\t\n \t   \t\n\n \t \n   \t \n\n \t \n   \t\t\n\n \t \n\n\n\n\n  \n\t\n \t\n\t\n', NameError),
+    ('   \t\n\t\n \t\n \t\n\n  \n   \t \n\t\n \t', SyntaxError),
+    ('   \t \n\t\n \t\n  \n\n\t\n\n\n\n', SyntaxError)
+]
+
+
+@pytest.mark.parametrize('code, error', CODES)
+def test_subroutine_edge_cases_raise_errors(code, error):
+    """Test that subroutine edge cases work properly."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(error):
+        whitespace(code)
+
+
+CODES = [
+    '   \t\n \n  \n \t\t  \t\t\t\n\n\n',
+    '   \t\n\t \n \n\n\n',
+    '   \t\n\t \t\n \t \n\n\n\n',
+    '\t\t\n\n\n',
+    '\n\n   \t\n\n\n\n',
+    '  \t\t\n\n\n\t\t\n\n  \n\n\n\n',
+    '\t\n\n\n',
+    '\t\n \n\n\n  \n\n\n\n',
+    '\n \t\n\n\n\n\n  \n\t\n\t\n'
+]
+
+
+@pytest.mark.parametrize('code', CODES)
+def test_invalid_commands_raise_error(code):
+    """Test that invalid commands raise SyntaxError."""
+    from esolang_whitespace import whitespace
+    with pytest.raises(SyntaxError):
+        whitespace(code)
 
 # Tests for the Interpreter Class
 
@@ -373,6 +456,71 @@ def test_run_can_access_the_flow_control_imp():
     i.run()
     assert i.stack == [0, 1, 2, 3, 4]
     assert i.labels == {'': 32}
+
+
+def test_find_labels_does_nothing_for_no_labels_in_code():
+    """Test that find_labels does nothing when there are no lables."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + TERMINATE)
+    i.find_labels()
+    assert i.labels == {}
+    assert i.stack == []
+
+
+def test_find_labels_extracts_labels_from_code():
+    """Test that find_labels can get all labels from code."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\n  \t\t\n\t\t \n  \t \n\n  \n' + TERMINATE)
+    i.find_labels()
+    assert i.labels == {'\t\t': 34, '\t ': 43, '': 47}
+
+
+def test_find_labels_resets_pointer_back_to_start():
+    """Test that the pointer is reset after find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\n  \t\t\n\n  \t \n\n  \n' + TERMINATE)
+    i.find_labels()
+    assert i.p == 0
+
+
+def test_find_labels_does_not_affect_program_stack():
+    """Test that the interpreter stack is unaffected by find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\n  \t\t\n\n  \t \n\n  \n' + TERMINATE)
+    i.find_labels()
+    assert i.stack == []
+
+
+def test_find_labels_does_not_affect_program_heap():
+    """Test that the interpreter heap is unaffected by find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\t\t \n  \t\t\n\n  \t \n\n  \n' + TERMINATE)
+    i.find_labels()
+    assert i.heap == {}
+
+
+def test_find_labels_does_not_affect_program_input():
+    """Test that the interpreter input is unaffected by find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter(FILL_STACK + '\t\n\t \n  \t\t\n\n  \t \n\n  \n' + TERMINATE, 'Hi.')
+    i.find_labels()
+    assert i.input == 'Hi.'
+
+
+def test_find_labels_does_not_raise_error_for_using_label():
+    """Test that no error is raised for using a label in find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n \n\t\n\n  \t\n' + TERMINATE)
+    i.find_labels()
+    assert i.labels == {'\t': 10}
+
+
+def test_find_labels_raises_error_for_redefining_label():
+    """Test SyntaxError is raised when redefining a label with find_labels."""
+    from esolang_whitespace import SpaceInterpreter
+    i = SpaceInterpreter('\n  \t\n\n  \t\n' + TERMINATE)
+    with pytest.raises(SyntaxError):
+        i.find_labels()
 
 
 def test_parse_num_empty_number_raises_error():
@@ -928,7 +1076,7 @@ def test_exec_flow_control_marking_with_duplicate_label_raises_error():
     i = SpaceInterpreter('  \t\n')
     i.labels = {'\t': 0}
     with pytest.raises(SyntaxError):
-        i.exec_flow_control('  \t\n', {'\t': 0}, [], [0])
+        i.exec_flow_control('  \t\n', {'\t': 0}, [], [0], parsing=True)
 
 
 def test_exec_flow_control_can_mark_current_location_with_label():
@@ -936,7 +1084,7 @@ def test_exec_flow_control_can_mark_current_location_with_label():
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('  \t\n\t\n  ')
     labels = {}
-    i.exec_flow_control('  \t\n\t\n  ', labels, [], [0])
+    i.exec_flow_control('  \t\n\t\n  ', labels, [], [0], parsing=True)
     assert labels == {'\t': 4}
 
 
@@ -1096,18 +1244,17 @@ def test_exec_flow_control_exit_command_from_subroutine_does_not_exit_program():
     """Test exec_flow_control subroutine exit does not exit program."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n')
-    _, exit = i.exec_flow_control('\t\n', {}, [], [0])
+    _, exit = i.exec_flow_control('\t\n', {}, [], [8, 0])
     assert exit is False
 
 
-def test_exec_flow_control_exit_command_from_subroutine_does_nothing_not_in_sub():
+def test_exec_flow_control_exit_command_from_subroutine_raises_error_not_in_sub():
     """Test exec_flow_control sub exit does nothing if not in subroutine."""
     from esolang_whitespace import SpaceInterpreter
     i = SpaceInterpreter('\t\n')
     call_stack = [0]
-    i.exec_flow_control('\t\n', {}, [], call_stack)
-    assert call_stack[-1] == 2
-    assert len(call_stack) == 1
+    with pytest.raises(SyntaxError):
+        i.exec_flow_control('\t\n', {}, [], call_stack)
 
 
 def test_exec_flow_control_exit_command_ends_program():
