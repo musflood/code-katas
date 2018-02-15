@@ -1,13 +1,82 @@
-"""Kata: Whitespace Interpreter."""
+r"""Kata: Whitespace Interpreter.
+
+#1 Best Practices Solution by laoris, Kick, DonChao, 0x1
+def whitespace(code, inp=''):
+    code = ''.join(['STN'[' \t\n'.index(c)] for c in code if c in ' \t\n'])
+    output, stack, heap, calls, pos, run, search, inp = [], [], {}, [], [0], [True], [None], list(inp)
+
+    def set_(t, i, val):
+        t[i] = val
+
+    # Stack operations
+    pop = lambda n=0: (assert_(n < len(stack)), stack[n], set_(stack, slice(n, n+1), ()))[1]
+    get = lambda n: (assert_(n >= 0 and n < len(stack)), stack[n])[1]
+    push = lambda n: stack.insert(0, n)
+
+    # Parsing utilities
+    def accept(tokens, action=None):
+        for token in tokens.split(','):
+            if code[pos[0]:pos[0]+len(token)] == token:
+                pos[0] += len(token)
+                if action:
+                    p = 0
+                    if token in ('SS', 'STS', 'STN'):
+                        p = number()
+                    elif token in ('NST', 'NSN', 'NTS', 'NTT', 'NSS'):
+                        p = label()
+                    ((not search[0]) or token == 'NSS') and action(p)
+                return token
+
+    def assert_(*args):
+        if len(args) and args[0]: return args[0]
+        raise Exception('error')
+
+    def number():
+        if accept('N'): raise Exception('No digits for number')
+        n = '+0' if accept('S,T') == 'S' else '-0'
+        while not accept('N'):
+            n += str(int(accept('S,T') != 'S'))
+        return int(n, 2)
+
+    def label(l=''):
+        while not accept('N'):
+            l += accept('S,T') or ''
+        return l + '1'
+
+    instructions = {'SS'  : lambda n: push(n),
+                    'STS' : lambda n: push(get(n)),
+                    'STN' : lambda n: set_(stack, slice(1, len(stack) if n < 0 else 1 + n), ()),
+                    'SNS' : lambda _: push(get(0)),
+                    'SNT' : lambda _: set_(stack, slice(1, 1), [pop()]),
+                    'SNN' : lambda _: pop(),
+                    'TSSS': lambda _: push(pop(1) + pop()),
+                    'TSST': lambda _: push(pop(1) - pop()),
+                    'TSSN': lambda _: push(pop(1) * pop()),
+                    'TSTS': lambda _: push(pop(1) / assert_(pop())),
+                    'TSTT': lambda _: (lambda d: push((pop() % d + d) % d))(assert_(pop())),
+                    'TTS' : lambda _: set_(heap, pop(1), pop()),
+                    'TTT' : lambda _: (assert_(stack[0] in heap), push(heap[pop()])),
+                    'TNSS': lambda _: output.append(chr(pop())),
+                    'TNST': lambda _: output.append(str(pop())),
+                    'TNTS': lambda _: (set_(heap, pop(), ord(assert_(inp)[0])), inp.pop(0)),
+                    'TNTT': lambda _: (lambda n: (set_(heap, pop(), int(assert_(''.join(inp[:n])))), set_(inp, slice(0, n + 1), ())))(inp.index('\n') if '\n' in inp else len(inp)),
+                    'NST' : lambda l: (calls.append(pos[0]), set_(pos, 0, heap[l]) if heap.get(l) else set_(search, 0, l)),
+                    'NSN' : lambda l: set_(pos, 0, heap[l]) if heap.get(l) else set_(search, 0, l),
+                    'NTS' : lambda l: (not pop()) and (set_(pos, 0, heap[l]) if heap.get(l) else set_(search, 0, l)),
+                    'NTT' : lambda l: pop() < 0 and (set_(pos, 0, heap[l]) if heap.get(l) else set_(search, 0, l)),
+                    'NTN' : lambda _: set_(pos, 0, assert_(calls).pop()),
+                    'NNN' : lambda _: set_(run, 0, False),
+                    'NSS' : lambda l: (assert_((not heap.get(l)) or heap[l] == pos[0]), set_(heap, l, pos[0]), search[0] == l and set_(search, 0, 0)),
+                   }
+
+    while run[0]:
+        assert_(pos[0] < len(code))
+        any(accept(*instruction) for instruction in instructions.items()) or assert_()
+
+    return ''.join(output)
+"""
 
 
-# to help with debugging
-def unbleach(n):
-    """Replace whitespace characters with visible characters."""
-    return n.replace(' ', 's').replace('\t', 't').replace('\n', 'n')
-
-
-# solution
 def whitespace(code, inp=''):
     """Evaluate the given code written in the WhiteSpace esolang."""
     return SpaceInterpreter(code, inp).run()
@@ -16,7 +85,7 @@ def whitespace(code, inp=''):
 class SpaceInterpreter(object):
     """Interpreter for the WhiteSpace esolang."""
 
-    def __init__(self, code, inp=''):
+    def __init__(self, code='', inp=''):
         """Create an interpreter for a given code and input."""
         self.code = ''.join([ch for ch in code if ch == ' ' or ch == '\n' or ch == '\t'])
         self.input = inp
@@ -94,7 +163,7 @@ class SpaceInterpreter(object):
                                  vis_code[self.p:self.p + 1],
                                  vis_code[self.p + 1:])
 
-    def run(self):
+    def run(self, code=None, inp=None):
         """Run the interpreter and get the output.
 
         Command modules:
@@ -106,12 +175,13 @@ class SpaceInterpreter(object):
 
         Raises ValueError for unclean termination.
         """
+        self.code = self.code if code is None else code
+        self.input = self.input if inp is None else inp
+
         output = ''
         self.find_labels()
 
         while self.p < len(self.code):
-            print(self)
-
             imp_string = self.code[self.p:self.p + 2]
             self.p += 2
 
