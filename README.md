@@ -7,6 +7,12 @@ Each solution directory includes my solution to the kata, with the #1 best pract
 
 ## Completed Kata
 
+**Whitespace Interpreter (2nd kyu)**
+
+- **Module**: `esolang_whitespace.py`
+- **Tests**: `test_esolang_whitespace.py`
+- **URL**: [challenge url](http://www.codewars.com/kata/whitespace-interpreter)
+
 **String Pyramid (6th kyu)**
 
 - **Module**: `string_pyramid.py`
